@@ -1,0 +1,11 @@
+DROP TABLE IF EXISTS "user_action";
+
+DROP TABLE IF EXISTS "user_info";
+
+ALTER TABLE IF EXISTS "account" DROP COLUMN "role";
+
+DROP TYPE IF EXISTS "role";
+
+DROP TYPE IF EXISTS "sex";
+
+DROP TABLE IF EXISTS "account";
