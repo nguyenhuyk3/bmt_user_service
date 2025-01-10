@@ -1,4 +1,4 @@
-package auth
+package services
 
 type IAuthUser interface {
 	Register()

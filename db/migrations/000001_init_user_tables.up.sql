@@ -1,4 +1,4 @@
-CREATE TYPE "role" AS ENUM (
+CREATE TYPE "roles" AS ENUM (
   'customer',
   'employee',
   'manage',
@@ -10,20 +10,20 @@ CREATE TYPE "sex" AS ENUM (
   'male'
 );
 
-CREATE TABLE "account" (
+CREATE TABLE "accounts" (
   "email" varchar(64) PRIMARY KEY NOT NULL,
   "password" varchar(64) NOT NULL,
-  "role" role
+  "role" roles
 );
 
-CREATE TABLE "user_info" (
+CREATE TABLE "user_infos" (
   "account_email" varchar(64),
   "name" varchar(64) NOT NULL,
   "sex" sex,
   "birth_day" char(16) NOT NULL
 );
 
-CREATE TABLE "user_action" (
+CREATE TABLE "user_actions" (
   "account_email" varchar(64),
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now()),
@@ -31,12 +31,12 @@ CREATE TABLE "user_action" (
   "logout_at" timestamptz NOT NULL DEFAULT null
 );
 
-CREATE INDEX ON "account" ("email");
+CREATE INDEX ON "accounts" ("email");
 
-CREATE INDEX ON "user_info" ("account_email");
+CREATE INDEX ON "user_infos" ("account_email");
 
-CREATE INDEX ON "user_action" ("account_email");
+CREATE INDEX ON "user_actions" ("account_email");
 
-ALTER TABLE "user_info" ADD FOREIGN KEY ("account_email") REFERENCES "account" ("email");
+ALTER TABLE "user_infos" ADD FOREIGN KEY ("account_email") REFERENCES "accounts" ("email");
 
-ALTER TABLE "user_action" ADD FOREIGN KEY ("account_email") REFERENCES "account" ("email");
+ALTER TABLE "user_actions" ADD FOREIGN KEY ("account_email") REFERENCES "accounts" ("email");

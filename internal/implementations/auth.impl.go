@@ -1,35 +1,35 @@
-package services
+package implementations
 
-import "user_service/internal/services/auth"
+import "user_service/internal/services"
 
 type AuthService struct {
 }
 
-func NewAuthService() auth.IAuthUser {
+func NewAuthService() services.IAuthUser {
 	return &AuthService{}
 }
 
-// ForgotPassword implements auth.IAuthUser.
+// ForgotPassword implements services.IAuthUser.
 func (a *AuthService) ForgotPassword() {
 	panic("unimplemented")
 }
 
-// Login implements auth.IAuthUser.
+// Login implements services.IAuthUser.
 func (a *AuthService) Login() {
 	panic("unimplemented")
 }
 
-// Register implements auth.IAuthUser.
+// Register implements services.IAuthUser.
 func (a *AuthService) Register() {
 	panic("unimplemented")
 }
 
-// UpdatePassword implements auth.IAuthUser.
+// UpdatePassword implements services.IAuthUser.
 func (a *AuthService) UpdatePassword() {
 	panic("unimplemented")
 }
 
-// VerifyOTP implements auth.IAuthUser.
+// VerifyOTP implements services.IAuthUser.
 func (a *AuthService) VerifyOTP() {
 	panic("unimplemented")
 }

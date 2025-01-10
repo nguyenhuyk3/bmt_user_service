@@ -9,4 +9,7 @@ migrate_up:
 migrate_down:
 	migrate -path ./db/migrations -database "$(DB_URL)" -verbose down
 
-.PHONY: run	migrateup migratedown
+sqlc:
+	sqlc generate
+
+.PHONY: run	migrateup migratedown slqc
