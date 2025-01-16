@@ -8,20 +8,19 @@ import (
 	"net/http"
 	"user_service/global"
 
-	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
 func loadConfigs() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("error loading .env file")
-	}
-
+	viper.AddConfigPath(".")
+	viper.SetConfigName("app")
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
 
-	fillConfigFromENV()
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal("error loading .env file")
+	}
 
 	err = viper.Unmarshal(&global.Config.Server)
 	if err != nil {
@@ -29,12 +28,6 @@ func loadConfigs() {
 	}
 
 	fetchConfigs()
-}
-
-func fillConfigFromENV() {
-	global.Config.Server.ServiceName = viper.GetString("SERVICE_NAME")
-	global.Config.Server.ConfigServiceUrl = viper.GetString("CONFIG_SERVICE_URL")
-	global.Config.Server.APIKey = viper.GetString("API_KEY")
 }
 
 func fetchConfigs() {
@@ -49,10 +42,12 @@ func fetchConfigs() {
 	if err != nil {
 		log.Fatalf("error reading response body: %v", err)
 	}
+
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Fatalf("error unmarshaling response: %v", err)
 	}
+
 	if data, ok := result["data"].(map[string]interface{}); ok {
 		dataBytes, _ := json.Marshal(data)
 		if err := json.Unmarshal(dataBytes, &global.Config.PostgreSql); err != nil {
