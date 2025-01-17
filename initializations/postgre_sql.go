@@ -1,11 +1,11 @@
 package initializations
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"user_service/global"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func initPostgreSql() {
@@ -13,19 +13,20 @@ func initPostgreSql() {
 	dbName := global.Config.ServiceSetting.PostgreSql.DbName
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.Host, config.Port, config.Username, config.Password, dbName)
-	db, err := sql.Open("postgres", connStr)
+	ctx := context.Background()
+	db, err := pgxpool.New(ctx, connStr)
 	if err != nil {
-		fmt.Println("error connecting to the database (initPostgresql):", err)
+		fmt.Println("error connecting to the database:", err)
 		return
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
+	if err := db.Ping(ctx); err != nil {
 		fmt.Println("error pinging the database:", err)
 		return
 	}
 
-	fmt.Println("Successfully connected to the database")
+	fmt.Println("successfully connected to the database")
 
 	global.Postgresql = db
 }

@@ -1,14 +1,16 @@
 package global
 
 import (
-	"database/sql"
+	"user_service/db/sqlc"
 	"user_service/pkgs/settings"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
 var (
 	Config     settings.Config
-	Postgresql *sql.DB
+	Postgresql *pgxpool.Pool
 	RDb        *redis.Client
+	Queries    *sqlc.Queries
 )

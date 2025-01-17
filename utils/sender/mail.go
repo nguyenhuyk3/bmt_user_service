@@ -1,4 +1,4 @@
-package sender
+package mail
 
 import (
 	"bytes"
@@ -6,13 +6,7 @@ import (
 	"html/template"
 	"net/smtp"
 	"strings"
-)
-
-const (
-	SMTPHost     = "email-smtp.us-east-1.amazonaws.com"
-	SMTPPort     = "2587"
-	SMTPUsername = "AKIA6GIFQIE5VHGEVMH7"
-	SMTPPassword = "BFbj4YdNTIYrkX1+SvumRnbA0br/sUNzrUOztb7SaVkz"
+	"user_service/global"
 )
 
 type EmailAddress struct {
@@ -47,10 +41,10 @@ func SendTextEmailOtp(to []string, from string, otp string) error {
 
 	messageMail := buildMessage(contentEmail)
 	// Send smtp
-	auth := smtp.PlainAuth("", SMTPUsername, SMTPPassword, SMTPHost)
-	err := smtp.SendMail(SMTPHost+":587", auth, from, to, []byte(messageMail))
+	mailSetting := global.Config.ServiceSetting.MailSetting
+	auth := smtp.PlainAuth("", mailSetting.BasicSetting.Username, mailSetting.BasicSetting.Password, mailSetting.BasicSetting.Host)
+	err := smtp.SendMail(mailSetting.BasicSetting.Host+":587", auth, from, to, []byte(messageMail))
 	if err != nil {
-		// global.Logger.Error("Email send failed::", zap.Error(err))
 		return err
 	}
 
@@ -71,17 +65,17 @@ func getMailTemplate(nameTemplate string, dataTemplate map[string]interface{}) (
 
 func send(to []string, from string, htmlTemplate string) error {
 	contentEmail := Mail{
-		From:    EmailAddress{Address: from, Name: "Nguyen Quoc Huy"},
+		From:    EmailAddress{Address: from, Name: "Nguyễn Quốc Huy"},
 		To:      to,
 		Subject: "Xác thực mã OTP",
 		Body:    htmlTemplate,
 	}
 	messageMail := buildMessage(contentEmail)
-	//send smtp
-	auth := smtp.PlainAuth("", SMTPUsername, SMTPPassword, SMTPHost)
-	err := smtp.SendMail(SMTPHost+":587", auth, from, to, []byte(messageMail))
+	mailSetting := global.Config.ServiceSetting.MailSetting
+	auth := smtp.PlainAuth("", mailSetting.BasicSetting.Username, mailSetting.BasicSetting.Password, mailSetting.BasicSetting.Host)
+	// Send smtp
+	err := smtp.SendMail(mailSetting.BasicSetting.Host+":587", auth, from, to, []byte(messageMail))
 	if err != nil {
-		// global.Logger.Error("Email send failed::", zap.Error(err))
 		return err
 	}
 

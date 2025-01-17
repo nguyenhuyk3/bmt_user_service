@@ -23,6 +23,7 @@ type serverSetting struct {
 	ServiceName      string `mapstructure:"SERVICE_NAME"`
 	ConfigServiceUrl string `mapstructure:"CONFIG_SERVICE_URL"`
 	APIKey           string `mapstructure:"API_KEY"`
+	ServerPort       string `mapstructure:"SERVER_PORT"`
 }
 
 type postgreSetting struct {
