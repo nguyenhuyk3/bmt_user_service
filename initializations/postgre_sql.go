@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"user_service/global"
+
+	_ "github.com/lib/pq"
 )
 
-func initPostGre() {
+func initPostgreSql() {
 	config := global.Config.ServiceSetting.PostgreSql.BasicSetting
 	dbName := global.Config.ServiceSetting.PostgreSql.DbName
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -17,6 +19,13 @@ func initPostGre() {
 		return
 	}
 	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		fmt.Println("error pinging the database:", err)
+		return
+	}
+
+	fmt.Println("Successfully connected to the database")
 
 	global.Postgresql = db
 }
