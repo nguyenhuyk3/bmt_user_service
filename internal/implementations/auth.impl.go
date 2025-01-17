@@ -1,14 +1,18 @@
 package implementations
 
 import (
+	"user_service/db/sqlc"
 	"user_service/internal/services"
 )
 
 type AuthService struct {
+	Queries *sqlc.Queries
 }
 
-func NewAuthService() services.IAuthUser {
-	return &AuthService{}
+func NewAuthService(queries *sqlc.Queries) services.IAuthUser {
+	return &AuthService{
+		Queries: queries,
+	}
 }
 
 // ForgotPassword implements services.IAuthUser.

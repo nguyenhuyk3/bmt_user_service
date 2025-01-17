@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 	"user_service/global"
 
 	"github.com/redis/go-redis/v9"
@@ -24,11 +23,6 @@ func initRedis() {
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
 		log.Fatalf("redis initialization error: %v", err)
-	}
-
-	err = rdb.Set(ctx, "key", "value", 10*time.Second).Err()
-	if err != nil {
-		log.Fatalf("Failed to set key in Redis: %v", err)
 	}
 
 	global.RDb = rdb

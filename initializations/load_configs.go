@@ -53,8 +53,7 @@ func fetchConfigs() {
 		if err := json.Unmarshal(dataBytes, &global.Config.ServiceSetting); err != nil {
 			log.Fatalf("error unmarshaling data to ServiceSetting: %v", err)
 		}
-		fmt.Printf("%+v\n", global.Config.ServiceSetting)
-
+		// fmt.Printf("%+v\n", global.Config.ServiceSetting)
 	} else {
 		log.Fatalf("no data found in response")
 	}
