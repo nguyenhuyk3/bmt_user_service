@@ -1,4 +1,4 @@
-package utils
+package generator
 
 import (
 	"crypto/rand"
@@ -6,12 +6,15 @@ import (
 	"math/big"
 )
 
+const (
+	digits = "0123456789"
+)
+
 func GenerateNumberBasedOnLength(length int) (string, error) {
 	if length <= 0 {
 		return "", fmt.Errorf("length must be greater than 0")
 	}
 
-	const digits = "0123456789"
 	otp := make([]byte, length)
 
 	for i := 0; i < length; i++ {

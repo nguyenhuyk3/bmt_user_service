@@ -1,4 +1,4 @@
-package utils
+package sender
 
 import (
 	"bytes"
@@ -59,7 +59,7 @@ func SendTextEmailOtp(to []string, from string, otp string) error {
 
 func getMailTemplate(nameTemplate string, dataTemplate map[string]interface{}) (string, error) {
 	htmlTemplate := new(bytes.Buffer)
-	t := template.Must(template.New(nameTemplate).ParseFiles("templates-email/" + nameTemplate))
+	t := template.Must(template.New(nameTemplate).ParseFiles("templates/" + nameTemplate))
 
 	err := t.Execute(htmlTemplate, dataTemplate)
 	if err != nil {

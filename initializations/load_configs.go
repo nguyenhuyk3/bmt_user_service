@@ -44,16 +44,17 @@ func fetchConfigs() {
 	}
 
 	var result map[string]interface{}
+
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Fatalf("error unmarshaling response: %v", err)
 	}
-
 	if data, ok := result["data"].(map[string]interface{}); ok {
 		dataBytes, _ := json.Marshal(data)
-		if err := json.Unmarshal(dataBytes, &global.Config.PostgreSql); err != nil {
-			log.Fatalf("error unmarshaling data to postgreSetting: %v", err)
+		if err := json.Unmarshal(dataBytes, &global.Config.ServiceSetting); err != nil {
+			log.Fatalf("error unmarshaling data to ServiceSetting: %v", err)
 		}
-		fmt.Println(global.Config.PostgreSql)
+		fmt.Printf("%+v\n", global.Config.ServiceSetting)
+
 	} else {
 		log.Fatalf("no data found in response")
 	}

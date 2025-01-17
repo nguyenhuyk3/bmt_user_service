@@ -1,6 +1,8 @@
 package implementations
 
-import "user_service/internal/services"
+import (
+	"user_service/internal/services"
+)
 
 type AuthService struct {
 }
@@ -21,7 +23,8 @@ func (a *AuthService) Login() {
 
 // Register implements services.IAuthUser.
 func (a *AuthService) Register() {
-	panic("unimplemented")
+	// 1. Hash email
+	// hashEmail := cryptor.GetHash()
 }
 
 // UpdatePassword implements services.IAuthUser.
