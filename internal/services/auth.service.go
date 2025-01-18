@@ -6,9 +6,9 @@ import (
 )
 
 type IAuth interface {
-	SendOTP(ctx context.Context, req request.SendOTPReq) (int, error)
+	SendOtp(ctx context.Context, req request.SendOtpReq) (int, error)
+	VerifyOtp(ctx context.Context, otp request.VerifyOtpReq) (int, error)
 	Login()
 	ForgotPassword()
 	UpdatePassword()
-	VerifyOTP()
 }

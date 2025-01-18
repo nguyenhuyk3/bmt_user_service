@@ -14,6 +14,11 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 	authController := controllers.NewAuthController(authService)
 	authRouterPublic := router.Group("/auth")
 	{
-		authRouterPublic.POST("/send_otp", authController.SendOTP)
+		registerRouterPublic := authRouterPublic.Group("/register")
+		{
+			registerRouterPublic.POST("/send_otp", authController.SendOtp)
+			registerRouterPublic.POST("/verify_otp", authController.VerifyOtp)
+		}
+
 	}
 }

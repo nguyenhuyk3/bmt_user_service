@@ -2,9 +2,12 @@ package redis
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 	"user_service/global"
+
+	"github.com/go-redis/redis"
 )
 
 var (
@@ -12,8 +15,13 @@ var (
 )
 
 // expirationTime must be in "minute" format
-func Save(key, value string, expirationTime int64) error {
-	err := global.RDb.SetEx(ctx, key, value, time.Duration(expirationTime)*time.Minute).Err()
+func Save(key string, value interface{}, expirationTime int64) error {
+	jsonValue, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("failed to serialize value: %w", err)
+	}
+
+	err = global.RDb.SetEx(ctx, key, jsonValue, time.Duration(expirationTime)*time.Minute).Err()
 	if err != nil {
 		return fmt.Errorf("failed to save OTP: %w", err)
 	}
@@ -35,6 +43,23 @@ func Delete(key string) error {
 	err := global.RDb.Del(ctx, key).Err()
 	if err != nil {
 		return fmt.Errorf("failed to delete key: %w", err)
+	}
+
+	return nil
+}
+
+func Get(key string, result interface{}) error {
+	value, err := global.RDb.Get(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return fmt.Errorf("key %s does not exist", key)
+		}
+		return fmt.Errorf("failed to get value: %w", err)
+	}
+
+	err = json.Unmarshal([]byte(value), result)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal value into result: %w", err)
 	}
 
 	return nil

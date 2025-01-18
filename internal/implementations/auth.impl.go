@@ -35,9 +35,9 @@ func (a *authService) Login() {
 }
 
 // Register implements services.IAuthUser.
-func (a *authService) SendOTP(ctx context.Context, req request.SendOTPReq) (int, error) {
+func (a *authService) SendOtp(ctx context.Context, req request.SendOtpReq) (int, error) {
 	// Check if email has otp in redis or not
-	emailIsInRegistrationKey := fmt.Sprintf("email::%s", req.Email)
+	emailIsInRegistrationKey := fmt.Sprintf("otp::%s", req.Email)
 	isExists, err := redis.ExistsKey(emailIsInRegistrationKey)
 	if isExists && err == nil {
 		return http.StatusConflict, errors.New("email is in registration status")
@@ -48,13 +48,13 @@ func (a *authService) SendOTP(ctx context.Context, req request.SendOTPReq) (int,
 		return http.StatusConflict, errors.New("email already exists")
 	}
 
-	expirationTime := 10
-	// Save email is in registration status
-	_ = redis.Save(emailIsInRegistrationKey, req.Email, int64(expirationTime))
-	// Saving otp into redis with time to live is 10 minutes
+	expirationTime := int64(10)
 	otp, _ := generator.GenerateNumberBasedOnLength(6)
-	emailWithOtpKey := fmt.Sprintf("%s::otp", req.Email)
-	_ = redis.Save(emailWithOtpKey, otp, int64(expirationTime))
+	// Save email and otp is in registration status
+	_ = redis.Save(emailIsInRegistrationKey, request.VerifyOtpReq{
+		Email: req.Email,
+		Otp:   otp,
+	}, expirationTime)
 
 	// Send mail
 	fromEmail := "1notthingm@gmail.com"
@@ -67,7 +67,6 @@ func (a *authService) SendOTP(ctx context.Context, req request.SendOTPReq) (int,
 		})
 	if err != nil {
 		redis.Delete(emailIsInRegistrationKey)
-		redis.Delete(emailWithOtpKey)
 
 		return http.StatusInternalServerError, errors.New("failed to send mail, please try again later")
 	}
@@ -75,12 +74,25 @@ func (a *authService) SendOTP(ctx context.Context, req request.SendOTPReq) (int,
 	return http.StatusOK, nil
 }
 
-// UpdatePassword implements services.IAuthUser.
-func (a *authService) UpdatePassword() {
-	panic("unimplemented")
+// VerifyOTP implements services.IAuthUser.
+func (a *authService) VerifyOtp(ctx context.Context, req request.VerifyOtpReq) (int, error) {
+	key := fmt.Sprintf("otp::%s", req.Email)
+	var result request.VerifyOtpReq
+	err := redis.Get(key, &result)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if req.Email == result.Email || req.Otp == result.Otp {
+		_ = redis.Delete(key)
+
+		return http.StatusOK, nil
+	}
+
+	return http.StatusUnauthorized, fmt.Errorf("invalid email or OTP")
 }
 
-// VerifyOTP implements services.IAuthUser.
-func (a *authService) VerifyOTP() {
+// UpdatePassword implements services.IAuthUser.
+func (a *authService) UpdatePassword() {
 	panic("unimplemented")
 }

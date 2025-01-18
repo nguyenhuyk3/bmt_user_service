@@ -21,8 +21,8 @@ func NewAuthController(authService services.IAuth) *authController {
 	}
 }
 
-func (ac *authController) SendOTP(c *gin.Context) {
-	var req request.SendOTPReq
+func (ac *authController) SendOtp(c *gin.Context) {
+	var req request.SendOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
@@ -30,11 +30,29 @@ func (ac *authController) SendOTP(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.SendOTP(ctx, req)
+	status, err := ac.AuthService.SendOtp(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
 
-	responses.SuccessResponse(c, http.StatusOK, "register perform successfully", nil)
+	responses.SuccessResponse(c, http.StatusOK, "send otp perform successfully", nil)
+}
+
+func (ac *authController) VerifyOtp(c *gin.Context) {
+	var req request.VerifyOtpReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	status, err := ac.AuthService.VerifyOtp(ctx, req)
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "verify otp perform successfully", nil)
 }
