@@ -35,7 +35,7 @@ func (a *authService) Login() {
 }
 
 // Register implements services.IAuthUser.
-func (a *authService) Register(ctx context.Context, req request.RegisterReq) (int, error) {
+func (a *authService) SendOTP(ctx context.Context, req request.SendOTPReq) (int, error) {
 	// Check if email has otp in redis or not
 	emailIsInRegistrationKey := fmt.Sprintf("email::%s", req.Email)
 	isExists, err := redis.ExistsKey(emailIsInRegistrationKey)

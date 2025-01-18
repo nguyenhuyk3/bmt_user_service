@@ -1,5 +1,5 @@
 package request
 
-type RegisterReq struct {
+type SendOTPReq struct {
 	Email string `json:"email" binding:"required"`
 }

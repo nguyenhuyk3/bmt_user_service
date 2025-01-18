@@ -6,7 +6,7 @@ import (
 )
 
 type IAuth interface {
-	Register(ctx context.Context, req request.RegisterReq) (int, error)
+	SendOTP(ctx context.Context, req request.SendOTPReq) (int, error)
 	Login()
 	ForgotPassword()
 	UpdatePassword()

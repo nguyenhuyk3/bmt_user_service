@@ -21,8 +21,8 @@ func NewAuthController(authService services.IAuth) *authController {
 	}
 }
 
-func (ac *authController) Register(c *gin.Context) {
-	var req request.RegisterReq
+func (ac *authController) SendOTP(c *gin.Context) {
+	var req request.SendOTPReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
@@ -30,7 +30,7 @@ func (ac *authController) Register(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.Register(ctx, req)
+	status, err := ac.AuthService.SendOTP(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
