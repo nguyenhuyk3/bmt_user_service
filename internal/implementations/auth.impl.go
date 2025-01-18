@@ -36,27 +36,39 @@ func (a *authService) Login() {
 
 // Register implements services.IAuthUser.
 func (a *authService) Register(ctx context.Context, req request.RegisterReq) (int, error) {
-	// 1. Check if email already exists or not
-	isExists, err := a.Queries.CheckAccountExistsByEmail(ctx, req.Email)
-	if isExists && err != nil {
+	// Check if email has otp in redis or not
+	emailIsInRegistrationKey := fmt.Sprintf("email::%s", req.Email)
+	isExists, err := redis.ExistsKey(emailIsInRegistrationKey)
+	if isExists && err == nil {
+		return http.StatusConflict, errors.New("email is in registration status")
+	}
+	// Check if email already exists or not
+	isExists, err = a.Queries.CheckAccountExistsByEmail(ctx, req.Email)
+	if isExists && err == nil {
 		return http.StatusConflict, errors.New("email already exists")
 	}
 
+	expirationTime := 10
+	// Save email is in registration status
+	_ = redis.Save(emailIsInRegistrationKey, req.Email, int64(expirationTime))
+	// Saving otp into redis with time to live is 10 minutes
 	otp, _ := generator.GenerateNumberBasedOnLength(6)
-	// 2. Saving otp into redis with time live is 10 minutes
-	fmt.Printf("otp is ::%s\n", otp)
-	err = redis.AddOTP(req.Email, otp, 10)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to generate OTP, please try again later")
-	}
+	emailWithOtpKey := fmt.Sprintf("%s::otp", req.Email)
+	_ = redis.Save(emailWithOtpKey, otp, int64(expirationTime))
 
-	// 3. Send mail
+	// Send mail
+	fromEmail := "1notthingm@gmail.com"
 	err = mail.SendTemplateEmailOtp([]string{req.Email},
-		"1notthingm@gmail.com", "otp_email.html",
+		fromEmail, "otp_email.html",
 		map[string]interface{}{
-			"otp": otp,
+			"otp":             otp,
+			"from_email":      fromEmail,
+			"expiration_time": expirationTime,
 		})
 	if err != nil {
+		redis.Delete(emailIsInRegistrationKey)
+		redis.Delete(emailWithOtpKey)
+
 		return http.StatusInternalServerError, errors.New("failed to send mail, please try again later")
 	}
 

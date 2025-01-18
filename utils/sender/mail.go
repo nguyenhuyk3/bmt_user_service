@@ -31,26 +31,6 @@ func buildMessage(mail Mail) string {
 	return msg
 }
 
-func SendTextEmailOtp(to []string, from string, otp string) error {
-	contentEmail := Mail{
-		From:    EmailAddress{Address: from, Name: "test"},
-		To:      to,
-		Subject: "OTP Verification",
-		Body:    fmt.Sprintf("Your OTP is %s. Please enter it to verify your account.", otp),
-	}
-
-	messageMail := buildMessage(contentEmail)
-	// Send smtp
-	mailSetting := global.Config.ServiceSetting.MailSetting
-	auth := smtp.PlainAuth("", mailSetting.BasicSetting.Username, mailSetting.BasicSetting.Password, mailSetting.BasicSetting.Host)
-	err := smtp.SendMail(mailSetting.BasicSetting.Host+":587", auth, from, to, []byte(messageMail))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func getMailTemplate(nameTemplate string, dataTemplate map[string]interface{}) (string, error) {
 	htmlTemplate := new(bytes.Buffer)
 	t := template.Must(template.New(nameTemplate).ParseFiles("templates/" + nameTemplate))

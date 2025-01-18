@@ -11,6 +11,7 @@
             font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
             color: #333;
             background-color: #fff;
+            font-size: 18px;
         }
 
         .container {
@@ -29,7 +30,7 @@
         }
 
         .header a {
-            font-size: 1.4em;
+            font-size: 1.6em;
             color: #000;
             text-decoration: none;
             font-weight: 600;
@@ -48,11 +49,13 @@
             padding: 0 10px;
             color: #fff;
             border-radius: 4px;
+            font-size: 2em;
+            font-weight: bold;
         }
 
         .footer {
             color: #aaa;
-            font-size: 0.8em;
+            font-size: 1.2em;
             line-height: 1;
             font-weight: 300;
         }
@@ -60,7 +63,7 @@
         .email-info {
             color: #666666;
             font-weight: 400;
-            font-size: 13px;
+            font-size: 1em;
             line-height: 18px;
             padding-bottom: 6px;
         }
@@ -82,9 +85,9 @@
             Chúng tôi đã nhận được yêu cầu đăng kí cho ứng dụng POKER cho tài khoản của bạn. Vì mục đích bảo mật, vui
             lòng xác minh danh tính của bạn bằng cách cung cấp mã OTP sau:
         </p>
-        <h2 class="otp">concak</h2>
+        <h2 class="otp">{{.otp}}</h2>
         <p style="font-size: 0.9em">
-            <strong>Mã OTP của bạn chỉ có hiệu lực trong 3 phút.</strong>
+            <strong>Mã OTP của bạn chỉ có hiệu lực trong {{.expiration_time}} phút.</strong>
         </p>
         <hr style="border: none; border-top: 0.5px solid #131111" />
         <div class="footer">
@@ -99,7 +102,7 @@
         <div class="email-info">
             <span>
                 Email được gửi từ
-                <a href="">1notthingm@gmail.com</a>
+                <a href="">{{.from_email}}</a>
             </span>
         </div>
         <div class="email-info">
@@ -114,4 +117,5 @@
 </body>
 <!--    This template is made Redwan one from Ocoxe. -->
 <!-- https://www.ocoxe.com -->
+
 </html>
