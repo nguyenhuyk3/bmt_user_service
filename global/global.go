@@ -14,3 +14,8 @@ var (
 	RDb        *redis.Client
 	Queries    *sqlc.Queries
 )
+
+const (
+	OTP_KEY                       = "opt::"
+	COMPLETE_REGISTRATION_PROCESS = "complete_registration_process::"
+)

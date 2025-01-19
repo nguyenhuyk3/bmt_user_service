@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"user_service/db/sqlc"
+	"user_service/global"
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
 
@@ -10,7 +12,8 @@ import (
 type AuthRouter struct{}
 
 func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
-	authService := implementations.NewAuthService()
+	sqlStore := sqlc.NewStore(global.Postgresql)
+	authService := implementations.NewAuthService(sqlStore)
 	authController := controllers.NewAuthController(authService)
 	authRouterPublic := router.Group("/auth")
 	{
@@ -19,6 +22,5 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 			registerRouterPublic.POST("/send_otp", authController.SendOtp)
 			registerRouterPublic.POST("/verify_otp", authController.VerifyOtp)
 		}
-
 	}
 }

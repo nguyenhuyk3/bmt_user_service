@@ -29,14 +29,14 @@ func Save(key string, value interface{}, expirationTime int64) error {
 	return nil
 }
 
-func ExistsKey(key string) (bool, error) {
+func ExistsKey(key string) bool {
 	count, err := global.RDb.Exists(ctx, key).Result()
 	if err != nil {
-		return false, fmt.Errorf("failed to check key existence: %w", err)
+		return false
 	}
 
 	// `count > 0` means the key exists
-	return count > 0, nil
+	return count > 0
 }
 
 func Delete(key string) error {

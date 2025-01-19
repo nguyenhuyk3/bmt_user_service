@@ -7,6 +7,8 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const checkAccountExistsByEmail = `-- name: CheckAccountExistsByEmail :one
@@ -20,4 +22,52 @@ func (q *Queries) CheckAccountExistsByEmail(ctx context.Context, email string) (
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const insertAccount = `-- name: InsertAccount :exec
+INSERT INTO "accounts" ("email", "password", "role")
+VALUES ($1, $2, $3)
+`
+
+type InsertAccountParams struct {
+	Email    string    `json:"email"`
+	Password string    `json:"password"`
+	Role     NullRoles `json:"role"`
+}
+
+func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) error {
+	_, err := q.db.Exec(ctx, insertAccount, arg.Email, arg.Password, arg.Role)
+	return err
+}
+
+const insertUserAction = `-- name: InsertUserAction :exec
+INSERT INTO "user_actions" ("account_email", "created_at", "updated_at", "login_at", "logout_at")
+VALUES ($1, NOW(), NOW(), NULL, NULL)
+`
+
+func (q *Queries) InsertUserAction(ctx context.Context, accountEmail pgtype.Text) error {
+	_, err := q.db.Exec(ctx, insertUserAction, accountEmail)
+	return err
+}
+
+const insertUserInfo = `-- name: InsertUserInfo :exec
+INSERT INTO "user_infos" ("account_email", "name", "sex", "birth_day")
+VALUES ($1, $2, $3, $4)
+`
+
+type InsertUserInfoParams struct {
+	AccountEmail pgtype.Text `json:"account_email"`
+	Name         string      `json:"name"`
+	Sex          NullSex     `json:"sex"`
+	BirthDay     string      `json:"birth_day"`
+}
+
+func (q *Queries) InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) error {
+	_, err := q.db.Exec(ctx, insertUserInfo,
+		arg.AccountEmail,
+		arg.Name,
+		arg.Sex,
+		arg.BirthDay,
+	)
+	return err
 }
