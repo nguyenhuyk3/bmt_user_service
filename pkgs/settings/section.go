@@ -23,7 +23,9 @@ type serverSetting struct {
 	ServiceName      string `mapstructure:"SERVICE_NAME"`
 	ConfigServiceUrl string `mapstructure:"CONFIG_SERVICE_URL"`
 	APIKey           string `mapstructure:"API_KEY"`
+	SercetKey        string `mapstructure:"SERCET_KEY"`
 	ServerPort       string `mapstructure:"SERVER_PORT"`
+	LengthOfSalt     int    `mapstructure:"LENGTH_OF_SALT"`
 }
 
 type postgreSetting struct {

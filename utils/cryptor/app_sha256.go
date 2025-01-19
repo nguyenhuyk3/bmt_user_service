@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 )
 
-func GetHash(key string) string {
+func Sha256GetHash(key string) string {
 	hash := sha256.New()
 	hash.Write([]byte(key))
 	hashBytes := hash.Sum(nil)
@@ -15,7 +15,7 @@ func GetHash(key string) string {
 }
 
 // GeneratareSalt generate a random salt
-func GenerateSalt(length int) (string, error) {
+func Sha256GenerateSalt(length int) (string, error) {
 	salt := make([]byte, length)
 	/*
 		Result is generated randomly
@@ -28,7 +28,7 @@ func GenerateSalt(length int) (string, error) {
 	return hex.EncodeToString(salt), nil
 }
 
-func HashPassword(password string, salt string) string {
+func Sha256Hash(password string, salt string) string {
 	// Concatenate password and salt
 	saltedPassword := password + salt
 	// Hash the combined string
@@ -37,8 +37,8 @@ func HashPassword(password string, salt string) string {
 	return hex.EncodeToString(hashPass[:])
 }
 
-func MatchingPassword(storedHash string, password string, salt string) bool {
-	hashPassword := HashPassword(password, salt)
+func Sha256Match(storedHash string, password string, salt string) bool {
+	hashPassword := Sha256Hash(password, salt)
 
 	return storedHash == hashPassword
 }

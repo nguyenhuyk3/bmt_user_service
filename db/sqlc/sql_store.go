@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"user_service/dto/request"
+	"user_service/utils/cryptor"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -51,9 +52,11 @@ func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRe
 		if err != nil {
 			return fmt.Errorf("failed to scan role: %v", err)
 		}
+
+		hashedPassword, _ := cryptor.BcryptHashInput(arg.Account.Password)
 		err = q.InsertAccount(ctx, InsertAccountParams{
 			Email:    arg.Account.Email,
-			Password: arg.Account.Password,
+			Password: hashedPassword,
 			Role:     role,
 		})
 		if err != nil {
