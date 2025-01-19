@@ -56,3 +56,21 @@ func (ac *authController) VerifyOtp(c *gin.Context) {
 
 	responses.SuccessResponse(c, http.StatusOK, "verify otp perform successfully", nil)
 }
+
+func (ac *authController) CompleteRegistration(c *gin.Context) {
+	var req request.CompleteRegistrationReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	status, err := ac.AuthService.CompleteRegistration(ctx, req)
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "registration perform successfully", nil)
+}

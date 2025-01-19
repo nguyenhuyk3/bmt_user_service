@@ -7,5 +7,5 @@ import (
 
 type Store interface {
 	Querier
-	InsertAccountTran(ctx context.Context, arg request.CompleteRegisterReq) error
+	InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq) error
 }

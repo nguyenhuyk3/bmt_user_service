@@ -104,16 +104,16 @@ type Accounts struct {
 }
 
 type UserActions struct {
-	AccountEmail pgtype.Text        `json:"account_email"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
-	LoginAt      pgtype.Timestamptz `json:"login_at"`
-	LogoutAt     pgtype.Timestamptz `json:"logout_at"`
+	Email     pgtype.Text        `json:"email"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	LoginAt   pgtype.Timestamptz `json:"login_at"`
+	LogoutAt  pgtype.Timestamptz `json:"logout_at"`
 }
 
 type UserInfos struct {
-	AccountEmail pgtype.Text `json:"account_email"`
-	Name         string      `json:"name"`
-	Sex          NullSex     `json:"sex"`
-	BirthDay     string      `json:"birth_day"`
+	Email    pgtype.Text `json:"email"`
+	Name     string      `json:"name"`
+	Sex      NullSex     `json:"sex"`
+	BirthDay string      `json:"birth_day"`
 }

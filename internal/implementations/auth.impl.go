@@ -39,7 +39,7 @@ func (a *authService) SendOtp(ctx context.Context, arg request.SendOtpReq) (int,
 	// Check if email has otp in redis or not
 	key := fmt.Sprintf("%s%s", global.OTP_KEY, arg.Email)
 	isExists := redis.ExistsKey(key)
-	if !isExists {
+	if isExists {
 		return http.StatusConflict, errors.New("email is in registration status")
 	}
 	// Check if email already exists or not
@@ -76,14 +76,14 @@ func (a *authService) SendOtp(ctx context.Context, arg request.SendOtpReq) (int,
 
 // VerifyOTP implements services.IAuthUser.
 func (a *authService) VerifyOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
-	key := fmt.Sprintf("otp::%s", arg.Email)
+	key := fmt.Sprintf("%s%s", global.OTP_KEY, arg.Email)
 	var result request.VerifyOtpReq
 	err := redis.Get(key, &result)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
-	if arg.Email == result.Email || arg.Otp == result.Otp {
+	if arg.Email == result.Email && arg.Otp == result.Otp {
 		_ = redis.Delete(key)
 		_ = redis.Save(fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, arg.Email),
 			map[string]interface{}{
@@ -93,18 +93,25 @@ func (a *authService) VerifyOtp(ctx context.Context, arg request.VerifyOtpReq) (
 		return http.StatusOK, nil
 	}
 
-	return http.StatusUnauthorized, fmt.Errorf("invalid email or OTP")
+	return http.StatusUnauthorized, fmt.Errorf("invalid email or otp")
 }
 
 // CompleteRegister implements services.IAuth.
-func (a *authService) CompleteRegister(ctx context.Context, arg request.CompleteRegisterReq) (int, error) {
+func (a *authService) CompleteRegistration(ctx context.Context, arg request.CompleteRegistrationReq) (int, error) {
 	key := fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, arg.Account.Email)
 	isExists := redis.ExistsKey(key)
 	if !isExists {
 		return http.StatusNotFound, errors.New("email is not found in redis")
 	}
 
-	return http.StatusOK, nil
+	err := a.SqlStore.InsertAccountTran(ctx, arg)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to complete registration: %w", err)
+	}
+
+	_ = redis.Delete(key)
+
+	return http.StatusCreated, nil
 }
 
 // UpdatePassword implements services.IAuthUser.

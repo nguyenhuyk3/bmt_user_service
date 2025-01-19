@@ -44,54 +44,55 @@ func (s *SqlStore) execTran(ctx context.Context, fn func(*Queries) error) error 
 }
 
 // InsertFullAccount implements Store.
-func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRegisterReq) error {
+func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq) error {
 	err := s.execTran(ctx, func(q *Queries) error {
-		var err error
-
 		var role NullRoles
-		err = role.Scan(arg.Account)
+		err := role.Scan(arg.Account.Role)
 		if err != nil {
-
+			return fmt.Errorf("failed to scan role: %v", err)
 		}
 		err = q.InsertAccount(ctx, InsertAccountParams{
 			Email:    arg.Account.Email,
 			Password: arg.Account.Password,
 			Role:     role,
 		})
-
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert account: %v", err)
 		}
 
 		var sex NullSex
 		err = sex.Scan(arg.Info.Sex)
 		if err != nil {
-
+			return fmt.Errorf("failed to scan sex: %v", err)
 		}
-
 		err = q.InsertUserInfo(ctx, InsertUserInfoParams{
-			AccountEmail: pgtype.Text{
+			Email: pgtype.Text{
 				String: arg.Account.Email,
+				Valid:  true,
 			},
 			Name:     arg.Info.Name,
 			Sex:      sex,
 			BirthDay: arg.Info.BirthDay,
 		})
-
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert user info: %v", err)
 		}
 
 		err = q.InsertUserAction(ctx, pgtype.Text{
 			String: arg.Account.Email,
+			Valid:  true,
 		})
-
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to insert user action: %v", err)
 		}
 
-		return err
+		return nil
 	})
+
+	if err != nil {
+		// If the transaction failed, return the error
+		return fmt.Errorf("transaction failed: %v", err)
+	}
 
 	return err
 }

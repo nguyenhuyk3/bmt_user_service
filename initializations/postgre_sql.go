@@ -3,6 +3,7 @@ package initializations
 import (
 	"context"
 	"fmt"
+	"os"
 	"user_service/global"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,11 +20,11 @@ func initPostgreSql() {
 		fmt.Println("error connecting to the database:", err)
 		return
 	}
-	defer db.Close()
 
 	if err := db.Ping(ctx); err != nil {
 		fmt.Println("error pinging the database:", err)
-		return
+
+		os.Exit(1)
 	}
 
 	fmt.Println("successfully connected to the database")

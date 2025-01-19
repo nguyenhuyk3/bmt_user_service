@@ -13,7 +13,7 @@ import (
 type Querier interface {
 	CheckAccountExistsByEmail(ctx context.Context, email string) (bool, error)
 	InsertAccount(ctx context.Context, arg InsertAccountParams) error
-	InsertUserAction(ctx context.Context, accountEmail pgtype.Text) error
+	InsertUserAction(ctx context.Context, email pgtype.Text) error
 	InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) error
 }
 

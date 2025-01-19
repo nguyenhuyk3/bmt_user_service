@@ -9,7 +9,7 @@ type VerifyOtpReq struct {
 	Otp   string `json:"otp" binding:"required,len=6"`
 }
 
-type CompleteRegisterReq struct {
+type CompleteRegistrationReq struct {
 	Account account `json:"account" binding:"required"`
 	Info    info    `json:"info" binding:"required"`
 }

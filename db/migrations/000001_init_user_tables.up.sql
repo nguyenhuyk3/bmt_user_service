@@ -17,26 +17,26 @@ CREATE TABLE "accounts" (
 );
 
 CREATE TABLE "user_infos" (
-  "account_email" varchar(64),
+  "email" varchar(64),
   "name" varchar(64) NOT NULL,
   "sex" sex,
   "birth_day" char(16) NOT NULL
 );
 
 CREATE TABLE "user_actions" (
-  "account_email" varchar(64),
+  "email" varchar(64),
   "created_at" timestamptz NOT NULL DEFAULT (now()),
   "updated_at" timestamptz NOT NULL DEFAULT (now()),
-  "login_at" timestamptz NOT NULL DEFAULT null,
-  "logout_at" timestamptz NOT NULL DEFAULT null
+  "login_at" timestamptz DEFAULT null,
+  "logout_at" timestamptz DEFAULT null
 );
 
 CREATE INDEX ON "accounts" ("email");
 
-CREATE INDEX ON "user_infos" ("account_email");
+CREATE INDEX ON "user_infos" ("email");
 
-CREATE INDEX ON "user_actions" ("account_email");
+CREATE INDEX ON "user_actions" ("email");
 
-ALTER TABLE "user_infos" ADD FOREIGN KEY ("account_email") REFERENCES "accounts" ("email");
+ALTER TABLE "user_infos" ADD FOREIGN KEY ("email") REFERENCES "accounts" ("email");
 
-ALTER TABLE "user_actions" ADD FOREIGN KEY ("account_email") REFERENCES "accounts" ("email");
+ALTER TABLE "user_actions" ADD FOREIGN KEY ("email") REFERENCES "accounts" ("email");

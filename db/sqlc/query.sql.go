@@ -41,30 +41,30 @@ func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) er
 }
 
 const insertUserAction = `-- name: InsertUserAction :exec
-INSERT INTO "user_actions" ("account_email", "created_at", "updated_at", "login_at", "logout_at")
+INSERT INTO "user_actions" ("email", "created_at", "updated_at", "login_at", "logout_at")
 VALUES ($1, NOW(), NOW(), NULL, NULL)
 `
 
-func (q *Queries) InsertUserAction(ctx context.Context, accountEmail pgtype.Text) error {
-	_, err := q.db.Exec(ctx, insertUserAction, accountEmail)
+func (q *Queries) InsertUserAction(ctx context.Context, email pgtype.Text) error {
+	_, err := q.db.Exec(ctx, insertUserAction, email)
 	return err
 }
 
 const insertUserInfo = `-- name: InsertUserInfo :exec
-INSERT INTO "user_infos" ("account_email", "name", "sex", "birth_day")
+INSERT INTO "user_infos" ("email", "name", "sex", "birth_day")
 VALUES ($1, $2, $3, $4)
 `
 
 type InsertUserInfoParams struct {
-	AccountEmail pgtype.Text `json:"account_email"`
-	Name         string      `json:"name"`
-	Sex          NullSex     `json:"sex"`
-	BirthDay     string      `json:"birth_day"`
+	Email    pgtype.Text `json:"email"`
+	Name     string      `json:"name"`
+	Sex      NullSex     `json:"sex"`
+	BirthDay string      `json:"birth_day"`
 }
 
 func (q *Queries) InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) error {
 	_, err := q.db.Exec(ctx, insertUserInfo,
-		arg.AccountEmail,
+		arg.Email,
 		arg.Name,
 		arg.Sex,
 		arg.BirthDay,
