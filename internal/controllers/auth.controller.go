@@ -76,5 +76,19 @@ func (ac *authController) CompleteRegistration(c *gin.Context) {
 }
 
 func (ac *authController) Login(c *gin.Context) {
+	var req request.LoginReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
 
+	data, status, err := ac.AuthService.Login(ctx, req)
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "login perform successfully", data)
 }

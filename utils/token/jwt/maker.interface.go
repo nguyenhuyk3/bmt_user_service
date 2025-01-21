@@ -3,7 +3,7 @@ package jwt
 import "time"
 
 // Maker is an interface for managing tokens
-type Maker interface {
+type IMaker interface {
 	// CreateToken creates a new token for a specific email and duration
 	CreateAccessToken(email string, role string, duration time.Duration) (string, *payload, error)
 	// VerifyToken checks if the token is valid or not

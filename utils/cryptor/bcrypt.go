@@ -6,7 +6,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// HashPassword returns the bcrypt hash of the password
+// BcryptHashInput returns the bcrypt hash of the input
 func BcryptHashInput(input string) (string, error) {
 	hashedInput, err := bcrypt.GenerateFromPassword([]byte(input), bcrypt.DefaultCost)
 	if err != nil {
@@ -16,7 +16,7 @@ func BcryptHashInput(input string) (string, error) {
 	return string(hashedInput), nil
 }
 
-// CheckPassword checks if the provided password is correct or not
-func BcryptCheckInput(input string, hashedInput string) error {
+// BcryptCheckInput checks if the provided input is correct or not
+func BcryptCheckInput(hashedInput string, input string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedInput), []byte(input))
 }

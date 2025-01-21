@@ -8,6 +8,7 @@ package sqlc
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -22,6 +23,19 @@ func (q *Queries) CheckAccountExistsByEmail(ctx context.Context, email string) (
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT email, password, role
+FROM accounts
+WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (Accounts, error) {
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	var i Accounts
+	err := row.Scan(&i.Email, &i.Password, &i.Role)
+	return i, err
 }
 
 const insertAccount = `-- name: InsertAccount :exec
@@ -70,4 +84,27 @@ func (q *Queries) InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) 
 		arg.BirthDay,
 	)
 	return err
+}
+
+const updateAction = `-- name: UpdateAction :execresult
+UPDATE "user_actions"
+SET 
+    login_at = CASE WHEN $1::timestamptz IS NOT NULL THEN $1::timestamptz ELSE login_at END,
+    logout_at = CASE WHEN $2::timestamptz IS NOT NULL THEN $2::timestamptz ELSE logout_at END,
+    updated_at = now()
+WHERE email = $3::text
+RETURNING 
+    login_at AS login_at,
+    logout_at AS logout_at,
+    email AS email
+`
+
+type UpdateActionParams struct {
+	Column1 pgtype.Timestamptz `json:"column_1"`
+	Column2 pgtype.Timestamptz `json:"column_2"`
+	Column3 string             `json:"column_3"`
+}
+
+func (q *Queries) UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, updateAction, arg.Column1, arg.Column2, arg.Column3)
 }

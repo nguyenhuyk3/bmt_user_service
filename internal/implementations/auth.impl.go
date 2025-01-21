@@ -2,36 +2,39 @@ package implementations
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 	"user_service/db/sqlc"
 	"user_service/dto/request"
+	"user_service/dto/response"
 	"user_service/global"
 	"user_service/internal/services"
 	"user_service/utils/cryptor"
 	"user_service/utils/generator"
 	"user_service/utils/redis"
 	mail "user_service/utils/sender"
+	"user_service/utils/token/jwt"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type authService struct {
 	SqlStore *sqlc.SqlStore
+	JwtMaker jwt.IMaker
 }
 
-func NewAuthService(sqlStore *sqlc.SqlStore) services.IAuth {
+func NewAuthService(sqlStore *sqlc.SqlStore, jwtMaker jwt.IMaker) services.IAuth {
 	return &authService{
 		SqlStore: sqlStore,
+		JwtMaker: jwtMaker,
 	}
 }
 
 // ForgotPassword implements services.IAuthUser.
 func (a *authService) ForgotPassword() {
-	panic("unimplemented")
-}
-
-// Login implements services.IAuthUser.
-func (a *authService) Login() {
 	panic("unimplemented")
 }
 
@@ -128,4 +131,55 @@ func (a *authService) CompleteRegistration(ctx context.Context, arg request.Comp
 // UpdatePassword implements services.IAuthUser.
 func (a *authService) UpdatePassword() {
 	panic("unimplemented")
+}
+
+// Login implements services.IAuthUser.
+func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
+	var result response.LoginRes
+
+	user, err := a.SqlStore.Queries.GetUserByEmail(ctx, arg.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return result, http.StatusNotFound, errors.New("user not found")
+		}
+
+		return result, http.StatusInternalServerError, fmt.Errorf("failed to fetch user: %w", err)
+	}
+
+	isMatch := cryptor.BcryptCheckInput(user.Password, arg.Password)
+	if isMatch != nil {
+		return result, http.StatusUnauthorized, errors.New("invalid credentials")
+	}
+
+	accessToken, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), time.Duration(60)*time.Minute)
+	if err != nil {
+		return result, http.StatusInternalServerError, fmt.Errorf("failed to create access token: %w", err)
+	}
+
+	refreshToken, err := a.JwtMaker.CreateRefreshToken(user.Email, time.Duration(60)*time.Minute)
+	if err != nil {
+		return result, http.StatusInternalServerError, fmt.Errorf("failed to create refresh token: %w", err)
+	}
+
+	_, err = a.SqlStore.Queries.UpdateAction(ctx, sqlc.UpdateActionParams{
+		Column3: user.Email,
+
+		Column1: pgtype.Timestamptz{
+			Time:  time.Now(), // Thêm UTC() để đảm bảo đúng định dạng timestamptz
+			Valid: true,
+		},
+		Column2: pgtype.Timestamptz{
+			Valid: false,
+			Time:  time.Time{}, // Thêm giá trị zero time
+		},
+	})
+	if err != nil {
+		return result, http.StatusInternalServerError, fmt.Errorf("failed to update user_action: %w", err)
+	}
+
+	result.AccessToken = accessToken
+	result.RefreshToken = refreshToken
+	result.Payload = payload
+
+	return result, http.StatusOK, nil
 }

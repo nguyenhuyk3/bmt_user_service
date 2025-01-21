@@ -5,6 +5,7 @@ import (
 	"user_service/global"
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
+	"user_service/utils/token/jwt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,15 +14,18 @@ type AuthRouter struct{}
 
 func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 	sqlStore := sqlc.NewStore(global.Postgresql)
-	authService := implementations.NewAuthService(sqlStore)
+	jwtMaker, _ := jwt.NewJWTMaker(global.Config.Server.SercetKey)
+	authService := implementations.NewAuthService(sqlStore, jwtMaker)
 	authController := controllers.NewAuthController(authService)
 	authRouterPublic := router.Group("/auth")
 	{
-		registerRouterPublic := authRouterPublic.Group("/register")
+		registrationRouterPublic := authRouterPublic.Group("/register")
 		{
-			registerRouterPublic.POST("/send_otp", authController.SendOtp)
-			registerRouterPublic.POST("/verify_otp", authController.VerifyOtp)
-			registerRouterPublic.POST("/complete_registration", authController.CompleteRegistration)
+			registrationRouterPublic.POST("/send_otp", authController.SendOtp)
+			registrationRouterPublic.POST("/verify_otp", authController.VerifyOtp)
+			registrationRouterPublic.POST("/complete_registration", authController.CompleteRegistration)
 		}
+
+		authRouterPublic.GET("/login", authController.Login)
 	}
 }
