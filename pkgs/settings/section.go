@@ -26,6 +26,7 @@ type serverSetting struct {
 	SercetKey        string `mapstructure:"SERCET_KEY"`
 	ServerPort       string `mapstructure:"SERVER_PORT"`
 	LengthOfSalt     int    `mapstructure:"LENGTH_OF_SALT"`
+	FromEmail        string `mapstructure:"FROM_EMAIL"`
 }
 
 type postgreSetting struct {

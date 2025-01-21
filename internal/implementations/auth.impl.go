@@ -59,12 +59,11 @@ func (a *authService) SendOtp(ctx context.Context, arg request.SendOtpReq) (int,
 	}, expirationTime)
 
 	// Send mail
-	fromEmail := "1notthingm@gmail.com"
 	err = mail.SendTemplateEmailOtp([]string{arg.Email},
-		fromEmail, "otp_email.html",
+		global.Config.Server.FromEmail, "otp_email.html",
 		map[string]interface{}{
 			"otp":             otp,
-			"from_email":      fromEmail,
+			"from_email":      global.Config.Server.FromEmail,
 			"expiration_time": expirationTime,
 		})
 	if err != nil {
@@ -79,6 +78,7 @@ func (a *authService) SendOtp(ctx context.Context, arg request.SendOtpReq) (int,
 // VerifyOTP implements services.IAuthUser.
 func (a *authService) VerifyOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
 	key := fmt.Sprintf("%s%s", global.OTP_KEY, arg.EncryptedEmail)
+
 	var result request.VerifyOtpReq
 
 	err := redis.Get(key, &result)

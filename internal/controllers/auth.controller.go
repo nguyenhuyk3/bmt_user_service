@@ -74,3 +74,7 @@ func (ac *authController) CompleteRegistration(c *gin.Context) {
 
 	responses.SuccessResponse(c, http.StatusOK, "registration perform successfully", nil)
 }
+
+func (ac *authController) Login(c *gin.Context) {
+
+}
