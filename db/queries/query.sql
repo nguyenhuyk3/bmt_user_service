@@ -24,11 +24,7 @@ WHERE email = $1;
 -- name: UpdateAction :execresult
 UPDATE "user_actions"
 SET 
-    login_at = CASE WHEN $1::timestamptz IS NOT NULL THEN $1::timestamptz ELSE login_at END,
-    logout_at = CASE WHEN $2::timestamptz IS NOT NULL THEN $2::timestamptz ELSE logout_at END,
+    login_at = CASE WHEN @login_at::timestamptz IS NOT NULL THEN @login_at::timestamptz ELSE login_at END,
+    logout_at = CASE WHEN @logout_at::timestamptz IS NOT NULL THEN @logout_at::timestamptz ELSE logout_at END,
     updated_at = now()
-WHERE email = $3::text
-RETURNING 
-    login_at AS login_at,
-    logout_at AS logout_at,
-    email AS email;
+WHERE email = @email::text;

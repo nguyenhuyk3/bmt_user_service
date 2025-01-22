@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 	"user_service/db/sqlc"
 	"user_service/dto/request"
@@ -151,35 +152,63 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 		return result, http.StatusUnauthorized, errors.New("invalid credentials")
 	}
 
-	accessToken, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), time.Duration(60)*time.Minute)
-	if err != nil {
-		return result, http.StatusInternalServerError, fmt.Errorf("failed to create access token: %w", err)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var errChan = make(chan error, 3)
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		token, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), 60*time.Minute)
+		mu.Lock()
+		defer mu.Unlock()
+		if err != nil {
+			errChan <- fmt.Errorf("failed to create access token: %w", err)
+			return
+		}
+		result.AccessToken = token
+		result.Payload = payload
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		token, err := a.JwtMaker.CreateRefreshToken(user.Email, 60*time.Minute)
+		mu.Lock()
+		defer mu.Unlock()
+		if err != nil {
+			errChan <- fmt.Errorf("failed to create refresh token: %w", err)
+			return
+		}
+		result.RefreshToken = token
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		_, err := a.SqlStore.Queries.UpdateAction(ctx, sqlc.UpdateActionParams{
+			Email: user.Email,
+			LoginAt: pgtype.Timestamptz{
+				Time:  time.Now(),
+				Valid: true,
+			},
+			LogoutAt: pgtype.Timestamptz{
+				Valid: false,
+			},
+		})
+		if err != nil {
+			errChan <- fmt.Errorf("failed to update user_action: %w", err)
+		}
+	}()
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan {
+		if err != nil {
+			return result, http.StatusInternalServerError, err
+		}
 	}
-
-	refreshToken, err := a.JwtMaker.CreateRefreshToken(user.Email, time.Duration(60)*time.Minute)
-	if err != nil {
-		return result, http.StatusInternalServerError, fmt.Errorf("failed to create refresh token: %w", err)
-	}
-
-	_, err = a.SqlStore.Queries.UpdateAction(ctx, sqlc.UpdateActionParams{
-		Column3: user.Email,
-
-		Column1: pgtype.Timestamptz{
-			Time:  time.Now(), // Thêm UTC() để đảm bảo đúng định dạng timestamptz
-			Valid: true,
-		},
-		Column2: pgtype.Timestamptz{
-			Valid: false,
-			Time:  time.Time{}, // Thêm giá trị zero time
-		},
-	})
-	if err != nil {
-		return result, http.StatusInternalServerError, fmt.Errorf("failed to update user_action: %w", err)
-	}
-
-	result.AccessToken = accessToken
-	result.RefreshToken = refreshToken
-	result.Payload = payload
 
 	return result, http.StatusOK, nil
 }

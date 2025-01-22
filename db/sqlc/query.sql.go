@@ -93,18 +93,14 @@ SET
     logout_at = CASE WHEN $2::timestamptz IS NOT NULL THEN $2::timestamptz ELSE logout_at END,
     updated_at = now()
 WHERE email = $3::text
-RETURNING 
-    login_at AS login_at,
-    logout_at AS logout_at,
-    email AS email
 `
 
 type UpdateActionParams struct {
-	Column1 pgtype.Timestamptz `json:"column_1"`
-	Column2 pgtype.Timestamptz `json:"column_2"`
-	Column3 string             `json:"column_3"`
+	LoginAt  pgtype.Timestamptz `json:"login_at"`
+	LogoutAt pgtype.Timestamptz `json:"logout_at"`
+	Email    string             `json:"email"`
 }
 
 func (q *Queries) UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error) {
-	return q.db.Exec(ctx, updateAction, arg.Column1, arg.Column2, arg.Column3)
+	return q.db.Exec(ctx, updateAction, arg.LoginAt, arg.LogoutAt, arg.Email)
 }

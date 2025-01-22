@@ -26,6 +26,6 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 			registrationRouterPublic.POST("/complete_registration", authController.CompleteRegistration)
 		}
 
-		authRouterPublic.GET("/login", authController.Login)
+		authRouterPublic.POST("/login", authController.Login)
 	}
 }
