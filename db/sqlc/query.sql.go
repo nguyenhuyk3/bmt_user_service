@@ -104,3 +104,20 @@ type UpdateActionParams struct {
 func (q *Queries) UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error) {
 	return q.db.Exec(ctx, updateAction, arg.LoginAt, arg.LogoutAt, arg.Email)
 }
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE "accounts"
+SET 
+    password = $1
+WHERE email = $2
+`
+
+type UpdatePasswordParams struct {
+	Password string `json:"password"`
+	Email    string `json:"email"`
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.Exec(ctx, updatePassword, arg.Password, arg.Email)
+	return err
+}

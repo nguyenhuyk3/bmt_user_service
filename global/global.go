@@ -15,6 +15,19 @@ var (
 )
 
 const (
-	OTP_KEY                       = "opt::"
+	REGISTRATION_OTP_KEY          = "opt::"
 	COMPLETE_REGISTRATION_PROCESS = "complete_registration_process::"
+
+	FORGOT_PASSWORD_KEY       = "forgot_password::"
+	ATTEMPT_KEY               = "ettempt::"
+	BLOCK_FORGOT_PASSWORD_KEY = "block_forgot_password_key::"
+)
+
+const (
+	FIXED_IV = "aBcD1EfGhIjK2LmN"
+)
+
+const (
+	REGISTRATION_PURPOSE    = "registration"
+	FORGOT_PASSWORD_PURPOSE = "forgot_password"
 )

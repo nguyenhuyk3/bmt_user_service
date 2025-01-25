@@ -18,6 +18,7 @@ type Querier interface {
 	InsertUserAction(ctx context.Context, email pgtype.Text) error
 	InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) error
 	UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error)
+	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)

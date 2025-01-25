@@ -21,11 +21,17 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 	{
 		registrationRouterPublic := authRouterPublic.Group("/register")
 		{
-			registrationRouterPublic.POST("/send_otp", authController.SendOtp)
+			registrationRouterPublic.POST("/send_otp", authController.SendRegistrationOtp)
 			registrationRouterPublic.POST("/verify_otp", authController.VerifyOtp)
 			registrationRouterPublic.POST("/complete_registration", authController.CompleteRegistration)
 		}
 
 		authRouterPublic.POST("/login", authController.Login)
+
+		forgotPasswordRouterPublic := authRouterPublic.Group("/forgot_password")
+		{
+			forgotPasswordRouterPublic.POST("send_otp", authController.SendForgotPasswordOtp)
+		}
+
 	}
 }

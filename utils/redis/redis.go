@@ -64,3 +64,21 @@ func Get(key string, result interface{}) error {
 
 	return nil
 }
+
+func GetTTL(key string) (time.Duration, error) {
+	timeRemaining, err := global.RDb.TTL(ctx, key).Result()
+	if err != nil {
+		return 0, fmt.Errorf("error checking TTL: %v", err)
+	}
+
+	switch {
+	case timeRemaining == -2:
+		return 0, fmt.Errorf("key does not exist")
+	case timeRemaining == -1:
+		return 0, fmt.Errorf("key exists but has no expiration")
+	case timeRemaining > 0:
+		return timeRemaining, nil
+	default:
+		return 0, fmt.Errorf("unexpected TTL value")
+	}
+}

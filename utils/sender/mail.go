@@ -43,11 +43,19 @@ func getMailTemplate(nameTemplate string, dataTemplate map[string]interface{}) (
 	return htmlTemplate.String(), nil
 }
 
-func send(to []string, from string, htmlTemplate string) error {
+func send(to []string, from string,
+	htmlTemplate string,
+	purpose string) error {
+	subject := "Xác thực mã OTP"
+
+	if purpose == "forgot_password" {
+		subject = "Quên mật khẩu"
+
+	}
 	contentEmail := Mail{
 		From:    EmailAddress{Address: from, Name: "Nguyễn Quốc Huy"},
 		To:      to,
-		Subject: "Xác thực mã OTP",
+		Subject: subject,
 		Body:    htmlTemplate,
 	}
 	messageMail := buildMessage(contentEmail)
@@ -63,7 +71,9 @@ func send(to []string, from string, htmlTemplate string) error {
 }
 
 func SendTemplateEmailOtp(
-	to []string, from string, nameTemplate string,
+	to []string, from string,
+	nameTemplate string,
+	purpose string,
 	dataTemplate map[string]interface{},
 ) error {
 	htmlBody, err := getMailTemplate(nameTemplate, dataTemplate)
@@ -71,5 +81,5 @@ func SendTemplateEmailOtp(
 		return err
 	}
 
-	return send(to, from, htmlBody)
+	return send(to, from, purpose, htmlBody)
 }

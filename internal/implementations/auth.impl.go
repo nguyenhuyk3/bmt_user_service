@@ -34,44 +34,48 @@ func NewAuthService(sqlStore *sqlc.SqlStore, jwtMaker jwt.IMaker) services.IAuth
 	}
 }
 
-// ForgotPassword implements services.IAuthUser.
-func (a *authService) ForgotPassword() {
-	panic("unimplemented")
-}
-
-// Register implements services.IAuthUser.
-func (a *authService) SendOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
+// SendRegistrationOtp implements services.IAuthUser.
+func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
 	// Check if email has otp in redis or not
-	encryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
-	key := fmt.Sprintf("%s%s", global.OTP_KEY, encryptedEmail)
-	isExists := redis.ExistsKey(key)
+	encryptedAesEmail, _ := cryptor.AesEncrypt(arg.Email)
+	registrationOtpKey := fmt.Sprintf("%s%s", global.REGISTRATION_OTP_KEY, encryptedAesEmail)
+	isExists := redis.ExistsKey(registrationOtpKey)
 	if isExists {
 		return http.StatusConflict, errors.New("email is in registration status")
 	}
+
+	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
+	isExists = redis.ExistsKey(completeRegistrationProcessKey)
+	if isExists {
+		return http.StatusConflict, errors.New("email is in complete registration process")
+	}
 	// Check if email already exists or not
 	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, arg.Email)
-	if isExists && err == nil {
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
+	}
+	if isExists {
 		return http.StatusConflict, errors.New("email already exists")
 	}
 
 	expirationTime := int64(10)
 	otp, _ := generator.GenerateNumberBasedOnLength(6)
+	encryptedBcryptEmail, _ := cryptor.BcryptHashInput(arg.Email)
 	// Save email and otp is in registration status
-	_ = redis.Save(key, request.VerifyOtpReq{
-		EncryptedEmail: encryptedEmail,
+	_ = redis.Save(registrationOtpKey, request.VerifyOtpReq{
+		EncryptedEmail: encryptedBcryptEmail,
 		Otp:            otp,
 	}, expirationTime)
-
-	// Send mail
 	err = mail.SendTemplateEmailOtp([]string{arg.Email},
-		global.Config.Server.FromEmail, "otp_email.html",
+		global.Config.Server.FromEmail, "registration_otp_email.html",
+		global.REGISTRATION_PURPOSE,
 		map[string]interface{}{
 			"otp":             otp,
 			"from_email":      global.Config.Server.FromEmail,
 			"expiration_time": expirationTime,
 		})
 	if err != nil {
-		redis.Delete(key)
+		redis.Delete(registrationOtpKey)
 
 		return http.StatusInternalServerError, errors.New("failed to send mail, please try again later")
 	}
@@ -81,22 +85,22 @@ func (a *authService) SendOtp(ctx context.Context, arg request.SendOtpReq) (int,
 
 // VerifyOTP implements services.IAuthUser.
 func (a *authService) VerifyOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
-	key := fmt.Sprintf("%s%s", global.OTP_KEY, arg.EncryptedEmail)
+	encryptedEmail, _ := cryptor.AesEncrypt(arg.Email)
+	key := fmt.Sprintf("%s%s", global.REGISTRATION_OTP_KEY, encryptedEmail)
 
 	var result request.VerifyOtpReq
-
 	err := redis.Get(key, &result)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
-	isMatch := cryptor.BcryptCheckInput(arg.Email, result.EncryptedEmail)
+	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Email)
 
 	if isMatch == nil && arg.Otp == result.Otp {
 		_ = redis.Delete(key)
-		_ = redis.Save(fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, arg.EncryptedEmail),
+		_ = redis.Save(fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, encryptedEmail),
 			map[string]interface{}{
-				"encrypted_email": arg.EncryptedEmail,
+				"encrypted_email": result.EncryptedEmail,
 			}, 10)
 
 		return http.StatusOK, nil
@@ -107,19 +111,21 @@ func (a *authService) VerifyOtp(ctx context.Context, arg request.VerifyOtpReq) (
 
 // CompleteRegister implements services.IAuth.
 func (a *authService) CompleteRegistration(ctx context.Context, arg request.CompleteRegistrationReq) (int, error) {
-	key := fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, arg.EncryptedEmail)
-	fmt.Println(arg.EncryptedEmail)
-	isExists := redis.ExistsKey(key)
-	if !isExists {
-		return http.StatusNotFound, errors.New("email is not found in redis")
+	encryptedEmail, _ := cryptor.AesEncrypt(arg.Account.Email)
+	key := fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, encryptedEmail)
+
+	var result request.VerifyOtpReq
+	err := redis.Get(key, &result)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("email is not in complete registration process %v", err)
 	}
 
-	isMatch := cryptor.BcryptCheckInput(arg.Account.Email, arg.EncryptedEmail)
+	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Account.Email)
 	if isMatch != nil {
 		return http.StatusBadRequest, errors.New("encrypted email and email don't match")
 	}
 
-	err := a.SqlStore.InsertAccountTran(ctx, arg)
+	err = a.SqlStore.InsertAccountTran(ctx, arg)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to complete registration: %w", err)
 	}
@@ -127,11 +133,6 @@ func (a *authService) CompleteRegistration(ctx context.Context, arg request.Comp
 	_ = redis.Delete(key)
 
 	return http.StatusCreated, nil
-}
-
-// UpdatePassword implements services.IAuthUser.
-func (a *authService) UpdatePassword() {
-	panic("unimplemented")
 }
 
 // Login implements services.IAuthUser.
@@ -211,4 +212,79 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	}
 
 	return result, http.StatusOK, nil
+}
+
+// SendForgotPasswordOtp implements services.IAuth.
+func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
+	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, arg.Email)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
+	}
+	if !isExists {
+		return http.StatusNotFound, errors.New("email doesn't exist")
+	}
+
+	encryptedEmail, _ := cryptor.AesEncrypt(arg.Email)
+	// This key will keep track of how many times the email has been sent.
+	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, encryptedEmail)
+	// Check if this key has been blocked due to exceeding 3 email attempts
+	blockKey := fmt.Sprintf("%s%s", global.BLOCK_FORGOT_PASSWORD_KEY, encryptedEmail)
+	blockedTTL, err := redis.GetTTL(blockKey)
+	if err == nil && blockedTTL > 0 {
+		_ = redis.Delete(attemptKey)
+
+		return http.StatusTooManyRequests, fmt.Errorf("you cannot make a request in: %v", blockedTTL)
+	}
+
+	var res blockSendForgotPasswordOtp
+	err = redis.Get(attemptKey, &res)
+	if err != nil {
+		res.Count = 0
+		_ = redis.Save(attemptKey, res, 3*60)
+	}
+
+	if res.Count > 2 {
+		_ = redis.Save(blockKey, map[string]interface{}{
+			"blocked": true,
+		}, 3*60)
+		_ = redis.Delete(attemptKey)
+
+		return http.StatusTooManyRequests, errors.New("you can't do the request in 3 hours")
+	}
+	// This key will hold the value of the otp code
+	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, encryptedEmail)
+	// Check remaining time of this key
+	remainingTime, _ := redis.GetTTL(forgotPasswordKey)
+	if remainingTime > 0 {
+		return http.StatusTooManyRequests, fmt.Errorf("please try again later %v", remainingTime)
+	}
+
+	otp, _ := generator.GenerateNumberBasedOnLength(6)
+	expirationTime := int64(1)
+	err = mail.SendTemplateEmailOtp([]string{arg.Email},
+		global.Config.Server.FromEmail, "forgot_password_otp_email.html",
+		global.REGISTRATION_PURPOSE,
+		map[string]interface{}{
+			"otp":             otp,
+			"from_email":      global.Config.Server.FromEmail,
+			"expiration_time": expirationTime,
+		})
+	if err == nil {
+		_ = redis.Save(forgotPasswordKey, map[string]interface{}{
+			"otp": otp,
+		}, expirationTime)
+
+		res.Count++
+
+		_ = redis.Save(attemptKey, res, 3*60)
+
+		return http.StatusOK, nil
+	} else {
+		return http.StatusInternalServerError, errors.New("send mail failed")
+	}
+}
+
+// UpdatePassword implements services.IAuth.
+func (a *authService) UpdatePassword(ctx context.Context, arg request.SendOtpReq) (int, error) {
+	return http.StatusOK, nil
 }

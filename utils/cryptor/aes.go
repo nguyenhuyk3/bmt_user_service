@@ -1,66 +1,70 @@
 package cryptor
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"io"
 	"user_service/global"
 )
 
-func AesEncrypt(email string) (string, error) {
-	key := []byte(global.Config.Server.SercetKey)
-	// Create block cipher
-	block, err := aes.NewCipher(key)
+// pkcs7Pad adds padding
+func pkcs7Pad(data []byte, blockSize int) []byte {
+	padding := blockSize - len(data)%blockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+
+	return append(data, padtext...)
+}
+
+// pkcs7Unpad removes padding
+func pkcs7Unpad(data []byte) []byte {
+	length := len(data)
+	unpadding := int(data[length-1])
+
+	return data[:(length - unpadding)]
+}
+
+var fixedIV = []byte(global.FIXED_IV)
+
+func AesEncrypt(text string) (string, error) {
+	keyBytes := []byte(global.Config.Server.SercetKey)
+	block, err := aes.NewCipher(keyBytes[:32])
 	if err != nil {
 		return "", fmt.Errorf("failed to create cipher: %v", err)
 	}
 
-	// Convert email to bytes
-	plaintext := []byte(email)
-	// Create buffer for encryption result
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-	// Generate random IV
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return "", fmt.Errorf("failed to create IV: %v", err)
-	}
+	plaintext := []byte(text)
+	plaintext = pkcs7Pad(plaintext, aes.BlockSize)
+	ciphertext := make([]byte, len(plaintext))
 
-	// Encryption
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
+	stream := cipher.NewCBCEncrypter(block, fixedIV)
+	stream.CryptBlocks(ciphertext, plaintext)
 
-	// Convert to base64 for easy storage
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func AesDecrypt(encryptedEmail string) (string, error) {
-	key := []byte(global.Config.Server.SercetKey)
-	// Decode base64 string to bytes
-	ciphertext, err := base64.StdEncoding.DecodeString(encryptedEmail)
+// Decrypt decrypt text
+func AesDecrypt(encryptedText string) (string, error) {
+	keyBytes := []byte(global.Config.Server.SercetKey)
+	block, err := aes.NewCipher(keyBytes[:32])
 	if err != nil {
-		return "", fmt.Errorf("failed to decode base64: %v", err)
-	}
-	// Create block cipher
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", fmt.Errorf("failed to create cipher: %v", err)
+		return "", err
 	}
 
-	// Check for valid length
+	ciphertext, err := base64.StdEncoding.DecodeString(encryptedText)
+	if err != nil {
+		return "", fmt.Errorf("invalid base64 encoding: %v", err)
+	}
+
 	if len(ciphertext) < aes.BlockSize {
-		return "", fmt.Errorf("encrypted email is too short")
+		return "", fmt.Errorf("ciphertext is too short, must be at least %d bytes", aes.BlockSize)
 	}
 
-	// Extract IV from ciphertext
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
+	mode := cipher.NewCBCDecrypter(block, fixedIV)
+	mode.CryptBlocks(ciphertext, ciphertext)
 
-	// Decryption
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
+	plaintext := pkcs7Unpad(ciphertext)
 
-	return string(ciphertext), nil
+	return string(plaintext), nil
 }

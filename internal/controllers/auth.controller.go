@@ -21,7 +21,7 @@ func NewAuthController(authService services.IAuth) *authController {
 	}
 }
 
-func (ac *authController) SendOtp(c *gin.Context) {
+func (ac *authController) SendRegistrationOtp(c *gin.Context) {
 	var req request.SendOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -30,7 +30,7 @@ func (ac *authController) SendOtp(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.SendOtp(ctx, req)
+	status, err := ac.AuthService.SendRegistrationOtp(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -91,4 +91,22 @@ func (ac *authController) Login(c *gin.Context) {
 	}
 
 	responses.SuccessResponse(c, http.StatusOK, "login perform successfully", data)
+}
+
+func (ac *authController) SendForgotPasswordOtp(c *gin.Context) {
+	var req request.SendOtpReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	status, err := ac.AuthService.SendForgotPasswordOtp(ctx, req)
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "send otp perform successfully", nil)
 }

@@ -28,3 +28,9 @@ SET
     logout_at = CASE WHEN @logout_at::timestamptz IS NOT NULL THEN @logout_at::timestamptz ELSE logout_at END,
     updated_at = now()
 WHERE email = @email::text;
+
+-- name: UpdatePassword :exec 
+UPDATE "accounts"
+SET 
+    password = $1
+WHERE email = $2;

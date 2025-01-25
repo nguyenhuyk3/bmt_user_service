@@ -3,8 +3,8 @@ package responses
 import "github.com/gin-gonic/gin"
 
 type responseData struct {
-	Code    int         `json:"status_code"`
-	Message string      `json:"message"`
+	Code    int         `json:"status_code" binding:"required"`
+	Message string      `json:"message" binding:"required"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
