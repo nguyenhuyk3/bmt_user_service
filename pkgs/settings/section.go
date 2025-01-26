@@ -2,45 +2,53 @@ package settings
 
 type Config struct {
 	Server         serverSetting
-	ServiceSetting serviceSetting `json:"data"`
+	ServiceSetting serviceSetting
 }
 
 type serviceSetting struct {
-	PostgreSql   postgreSetting `json:"database"`
-	MailSetting  mailSetting    `json:"mail"`
-	RedisSetting redisSetting   `json:"redis"`
+	PostgreSql   postgreSetting `mapstructure:"database"`
+	MailSetting  mailSetting    `mapstructure:"mail"`
+	RedisSetting redisSetting   `mapstructure:"redis"`
 }
 
-type basicSetting struct {
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
-	Database int    `json:"database,omitempty"`
-}
+// type BasicSetting struct {
+// 	Host     string `mapstructure:"host"`
+// 	Port     int    `mapstructure:"port"`
+// 	Username string `mapstructure:"username,omitempty"`
+// 	Password string `mapstructure:"password,omitempty"`
+// 	Database int    `mapstructure:"database,omitempty"`
+// }
 
 type serverSetting struct {
-	ServiceName      string `mapstructure:"SERVICE_NAME"`
-	ConfigServiceUrl string `mapstructure:"CONFIG_SERVICE_URL"`
-	APIKey           string `mapstructure:"API_KEY"`
-	SercetKey        string `mapstructure:"SERCET_KEY"`
-	ServerPort       string `mapstructure:"SERVER_PORT"`
-	LengthOfSalt     int    `mapstructure:"LENGTH_OF_SALT"`
-	FromEmail        string `mapstructure:"FROM_EMAIL"`
+	ServerPort   string `mapstructure:"SERVER_PORT"`
+	FromEmail    string `mapstructure:"FROM_EMAIL"`
+	APIKey       string `mapstructure:"API_KEY"`
+	SercetKey    string `mapstructure:"SERCET_KEY"`
+	LengthOfSalt int    `mapstructure:"LENGTH_OF_SALT"`
 }
 
 type postgreSetting struct {
-	BasicSetting    basicSetting `json:"basic_settings"`
-	DbName          string       `json:"db_name"`
-	MaxIdleConns    int          `json:"max_idle_conns"`
-	MaxOpenConns    int          `json:"max_open_conns"`
-	ConnMaxLifetime int          `json:"conn_max_lifetime"`
+	Host            string `mapstructure:"host"`
+	Port            int    `mapstructure:"port"`
+	Username        string `mapstructure:"username,omitempty"`
+	Password        string `mapstructure:"password,omitempty"`
+	DbName          string `mapstructure:"db_name"`
+	MaxIdleConns    int    `mapstructure:"max_idle_conns"`
+	MaxOpenConns    int    `mapstructure:"max_open_conns"`
+	ConnMaxLifetime int    `mapstructure:"conn_max_lifetime"`
 }
 
 type mailSetting struct {
-	BasicSetting basicSetting `json:"basic_settings"`
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username,omitempty"`
+	Password string `mapstructure:"password,omitempty"`
 }
 
 type redisSetting struct {
-	BasicSetting basicSetting `json:"basic_settings"`
+	Host     string `mapstructure:"host"`
+	Port     int    `mapstructure:"port"`
+	Username string `mapstructure:"username,omitempty"`
+	Password string `mapstructure:"password,omitempty"`
+	Database int    `mapstructure:"database,omitempty"`
 }

@@ -1,17 +1,19 @@
 package initializations
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"user_service/global"
 
 	"github.com/spf13/viper"
 )
 
 func loadConfigs() {
+	loadConfigsFromENV()
+	loadConfigsFromYAML()
+}
+
+func loadConfigsFromENV() {
 	viper.AddConfigPath(".")
 	viper.SetConfigName("app")
 	viper.SetConfigType("env")
@@ -24,37 +26,24 @@ func loadConfigs() {
 
 	err = viper.Unmarshal(&global.Config.Server)
 	if err != nil {
-		log.Fatalf("unable to decode into struct, %v", err)
+		log.Fatalf("unable to decode into struct (env), %v", err)
 	}
 
-	fetchConfigs()
+	fmt.Println(global.Config.Server)
 }
 
-func fetchConfigs() {
-	url := fmt.Sprintf("%s?service_name=%s", global.Config.Server.ConfigServiceUrl, global.Config.Server.ServiceName)
-	resp, err := http.Get(url)
+func loadConfigsFromYAML() {
+	viper.AddConfigPath(".")
+	viper.SetConfigName("local")
+	viper.SetConfigType("yaml")
+
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("error making GET request: %v", err)
+		log.Fatal("error loading .yaml file")
 	}
-	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	err = viper.Unmarshal(&global.Config.ServiceSetting)
 	if err != nil {
-		log.Fatalf("error reading response body: %v", err)
-	}
-
-	var result map[string]interface{}
-
-	if err := json.Unmarshal(body, &result); err != nil {
-		log.Fatalf("error unmarshaling response: %v", err)
-	}
-	if data, ok := result["data"].(map[string]interface{}); ok {
-		dataBytes, _ := json.Marshal(data)
-		if err := json.Unmarshal(dataBytes, &global.Config.ServiceSetting); err != nil {
-			log.Fatalf("error unmarshaling data to ServiceSetting: %v", err)
-		}
-		// fmt.Printf("%+v\n", global.Config.ServiceSetting)
-	} else {
-		log.Fatalf("no data found in response")
+		log.Fatalf("unable to decode into struct (yaml), %v", err)
 	}
 }

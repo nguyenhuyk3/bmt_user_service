@@ -10,7 +10,7 @@ import (
 )
 
 func initPostgreSql() {
-	config := global.Config.ServiceSetting.PostgreSql.BasicSetting
+	config := global.Config.ServiceSetting.PostgreSql
 	dbName := global.Config.ServiceSetting.PostgreSql.DbName
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.Host, config.Port, config.Username, config.Password, dbName)

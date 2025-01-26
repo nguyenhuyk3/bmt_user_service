@@ -1,0 +1,19 @@
+database:
+  host: "127.0.0.1"
+  port: 5432
+  username: "postgres"
+  password: "anhiuemlove33"
+  db_name: "bmt_user"
+  max_idle_conns: 10
+  max_open_conns: 100
+  conn_max_lifetime: 3600
+mail:
+  host: "email-smtp.us-east-1.amazonaws.com"
+  port: "2587"
+  username: "AKIA6GIFQIE5VHGEVMH7"
+  password: "BFbj4YdNTIYrkX1+SvumRnbA0br/sUNzrUOztb7SaVkz"
+redis:
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  database: 0

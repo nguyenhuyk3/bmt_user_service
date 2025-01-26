@@ -65,9 +65,9 @@ func send(to []string, from string,
 	}
 	messageMail := buildMessage(contentEmail)
 	mailSetting := global.Config.ServiceSetting.MailSetting
-	auth := smtp.PlainAuth("", mailSetting.BasicSetting.Username, mailSetting.BasicSetting.Password, mailSetting.BasicSetting.Host)
+	auth := smtp.PlainAuth("", mailSetting.Username, mailSetting.Password, mailSetting.Host)
 	// Send smtp
-	err := smtp.SendMail(mailSetting.BasicSetting.Host+":587", auth, from, to, []byte(messageMail))
+	err := smtp.SendMail(mailSetting.Host+":587", auth, from, to, []byte(messageMail))
 	if err != nil {
 		return err
 	}
