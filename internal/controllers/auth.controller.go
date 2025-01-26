@@ -11,17 +11,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type authController struct {
+type AuthController struct {
 	AuthService services.IAuth
 }
 
-func NewAuthController(authService services.IAuth) *authController {
-	return &authController{
+func NewAuthController(authService services.IAuth) *AuthController {
+	return &AuthController{
 		AuthService: authService,
 	}
 }
 
-func (ac *authController) SendRegistrationOtp(c *gin.Context) {
+func (ac *AuthController) SendRegistrationOtp(c *gin.Context) {
 	var req request.SendOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -39,7 +39,7 @@ func (ac *authController) SendRegistrationOtp(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "send otp perform successfully", nil)
 }
 
-func (ac *authController) VerifyRegistrationOtp(c *gin.Context) {
+func (ac *AuthController) VerifyRegistrationOtp(c *gin.Context) {
 	var req request.VerifyOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -57,7 +57,7 @@ func (ac *authController) VerifyRegistrationOtp(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "verify otp perform successfully", nil)
 }
 
-func (ac *authController) CompleteRegistration(c *gin.Context) {
+func (ac *AuthController) CompleteRegistration(c *gin.Context) {
 	var req request.CompleteRegistrationReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -75,7 +75,7 @@ func (ac *authController) CompleteRegistration(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "registration perform successfully", nil)
 }
 
-func (ac *authController) Login(c *gin.Context) {
+func (ac *AuthController) Login(c *gin.Context) {
 	var req request.LoginReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -93,7 +93,7 @@ func (ac *authController) Login(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "login perform successfully", data)
 }
 
-func (ac *authController) SendForgotPasswordOtp(c *gin.Context) {
+func (ac *AuthController) SendForgotPasswordOtp(c *gin.Context) {
 	var req request.SendOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -111,7 +111,7 @@ func (ac *authController) SendForgotPasswordOtp(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "send otp perform successfully", nil)
 }
 
-func (ac *authController) VerifyForgotPasswordOtp(c *gin.Context) {
+func (ac *AuthController) VerifyForgotPasswordOtp(c *gin.Context) {
 	var req request.VerifyOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
@@ -130,7 +130,7 @@ func (ac *authController) VerifyForgotPasswordOtp(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "verifying otp for forgot password perform successfully", nil)
 }
 
-func (ac *authController) CompleteForgotPassword(c *gin.Context) {
+func (ac *AuthController) CompleteForgotPassword(c *gin.Context) {
 	var req request.CompleteForgotPasswordReq
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")

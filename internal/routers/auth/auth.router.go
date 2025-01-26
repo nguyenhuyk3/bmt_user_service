@@ -1,11 +1,8 @@
 package auth
 
 import (
-	"user_service/db/sqlc"
-	"user_service/global"
-	"user_service/internal/controllers"
-	"user_service/internal/implementations"
-	"user_service/utils/token/jwt"
+	"log"
+	"user_service/internal/injectors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,10 +10,10 @@ import (
 type AuthRouter struct{}
 
 func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
-	sqlStore := sqlc.NewStore(global.Postgresql)
-	jwtMaker, _ := jwt.NewJWTMaker(global.Config.Server.SercetKey)
-	authService := implementations.NewAuthService(sqlStore, jwtMaker)
-	authController := controllers.NewAuthController(authService)
+	authController, err := injectors.InitAuthController()
+	if err != nil {
+		log.Fatalf("cannot init auth controller: %v", err)
+	}
 	authRouterPublic := router.Group("/auth")
 	{
 		registrationRouterPublic := authRouterPublic.Group("/register")

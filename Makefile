@@ -12,4 +12,7 @@ migrate_down:
 sqlc:
 	sqlc generate
 
-.PHONY: run	migrateup migratedown slqc
+wire:
+	wire ./internal/injectors/
+
+.PHONY: run	migrateup migratedown slqc wire
