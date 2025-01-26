@@ -5,9 +5,8 @@ type SendOtpReq struct {
 }
 
 type VerifyOtpReq struct {
-	Email          string `json:"email,omitempty" binding:"email"`
-	EncryptedEmail string `json:"encrypted_email" binding:"required"`
-	Otp            string `json:"otp,omitempty" binding:"required,len=6"`
+	Email string `json:"email,omitempty" binding:"email"`
+	Otp   string `json:"otp,omitempty" binding:"required,len=6"`
 }
 
 type CompleteRegistrationReq struct {
@@ -18,4 +17,9 @@ type CompleteRegistrationReq struct {
 type LoginReq struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
+}
+
+type CompleteForgotPasswordReq struct {
+	Email       string `json:"email" binding:"required,email"`
+	NewPassword string `json:"new_password" binding:"required"`
 }

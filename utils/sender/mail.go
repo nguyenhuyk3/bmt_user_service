@@ -2,6 +2,7 @@ package mail
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/smtp"
@@ -44,14 +45,18 @@ func getMailTemplate(nameTemplate string, dataTemplate map[string]interface{}) (
 }
 
 func send(to []string, from string,
-	htmlTemplate string,
-	purpose string) error {
-	subject := "Xác thực mã OTP"
-
-	if purpose == "forgot_password" {
+	purpose string,
+	htmlTemplate string) error {
+	var subject string
+	switch purpose {
+	case global.REGISTRATION_OTP_KEY:
+		subject = "Xác thực mã OTP"
+	case global.FORGOT_PASSWORD_PURPOSE:
 		subject = "Quên mật khẩu"
-
+	default:
+		return errors.New("invalid purpose")
 	}
+
 	contentEmail := Mail{
 		From:    EmailAddress{Address: from, Name: "Nguyễn Quốc Huy"},
 		To:      to,

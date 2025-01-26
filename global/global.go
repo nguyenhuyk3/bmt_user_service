@@ -17,10 +17,11 @@ var (
 const (
 	REGISTRATION_OTP_KEY          = "opt::"
 	COMPLETE_REGISTRATION_PROCESS = "complete_registration_process::"
-
-	FORGOT_PASSWORD_KEY       = "forgot_password::"
-	ATTEMPT_KEY               = "ettempt::"
-	BLOCK_FORGOT_PASSWORD_KEY = "block_forgot_password_key::"
+	// These keys below will be used for forgot password purposes
+	FORGOT_PASSWORD_KEY              = "forgot_password::"
+	ATTEMPT_KEY                      = "ettempt::"
+	BLOCK_FORGOT_PASSWORD_KEY        = "block_forgot_password_key::"
+	COMPLETE_FORGOT_PASSWORD_PROCESS = "complete_forgot_password_process::"
 )
 
 const (
