@@ -23,3 +23,11 @@ type CompleteForgotPasswordReq struct {
 	Email       string `json:"email" binding:"required,email"`
 	NewPassword string `json:"new_password" binding:"required"`
 }
+
+// var AttemptData struct {
+// 	Count int `json:"count" binding:"required"`
+// }
+
+type GetInforReq struct {
+	Email string `json:"email" binding:"required,email"`
+}

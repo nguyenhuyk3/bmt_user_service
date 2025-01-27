@@ -8,7 +8,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-const minSecretKeySize = 32
+const MIN_SECRET_KEY_SIZE = 32
 
 // JWTMaker is a JSON Web Token maker
 type JWTMaker struct {
@@ -17,8 +17,8 @@ type JWTMaker struct {
 
 // NewJWTMaker creates a new JWTMaker
 func NewJWTMaker(secretKey string) (IMaker, error) {
-	if len(secretKey) < minSecretKeySize {
-		return nil, fmt.Errorf("invalid key size: must be at least %d characters", minSecretKeySize)
+	if len(secretKey) < MIN_SECRET_KEY_SIZE {
+		return nil, fmt.Errorf("invalid key size: must be at least %d characters", MIN_SECRET_KEY_SIZE)
 	}
 
 	return &JWTMaker{secretKey}, nil
@@ -59,7 +59,7 @@ func (j *JWTMaker) VerifyAccessToken(token string) (*payload, error) {
 	}
 
 	payload, ok := jwtToken.Claims.(*payload)
-	if !ok {
+	if !ok || !jwtToken.Valid {
 		return nil, InvalidTokenErr
 	}
 
@@ -67,9 +67,10 @@ func (j *JWTMaker) VerifyAccessToken(token string) (*payload, error) {
 }
 
 // CreateRefreshToken implements Maker.
-func (j *JWTMaker) CreateRefreshToken(email string, duration time.Duration) (string, error) {
+func (j *JWTMaker) CreateRefreshToken(email, role string, duration time.Duration) (string, error) {
 	claims := jwt.MapClaims{
 		"email":     email,
+		"role":      role,
 		"exp":       time.Now().Add(duration).Unix(), // Expiration time
 		"issued_at": time.Now().Unix(),               // Issued at
 	}
@@ -85,7 +86,7 @@ func (j *JWTMaker) CreateRefreshToken(email string, duration time.Duration) (str
 }
 
 // VerifyRefreshToken implements Maker.
-func (j *JWTMaker) VerifyRefreshToken(refreshToken string, secretKey string) (string, error) {
+func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (string, string, error) {
 	// Define a key function for validating the token's signing method
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
@@ -101,23 +102,42 @@ func (j *JWTMaker) VerifyRefreshToken(refreshToken string, secretKey string) (st
 	if err != nil {
 		vErr, ok := err.(*jwt.ValidationError)
 		if ok && errors.Is(vErr.Inner, ExpiredTokenErr) {
-			return "", ExpiredTokenErr
+			return "", "", ExpiredTokenErr
 		}
 
-		return "", InvalidTokenErr
+		return "", "", InvalidTokenErr
 	}
 
 	// Extract claims from the token
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	if !ok || !parsedToken.Valid {
-		return "", InvalidTokenErr
+		return "", "", InvalidTokenErr
 	}
 
-	// Extract the user ID from the claims
+	// Extract the email from the claims
 	email, ok := claims["email"].(string)
 	if !ok {
-		return "", InvalidTokenErr
+		return "", "", InvalidTokenErr
+	}
+	role, ok := claims["role"].(string)
+	if !ok {
+		return "", "", InvalidTokenErr
 	}
 
-	return email, nil
+	return email, role, nil
+}
+
+// RefreshAccessToken cấp lại access_token từ refresh_token
+func (j *JWTMaker) RefreshAccessToken(refreshToken string) (string, *payload, error) {
+	email, role, err := j.VerifyRefreshToken(refreshToken)
+	if err != nil {
+		return "", nil, fmt.Errorf("invalid refresh token: %w", err)
+	}
+
+	newAccessToken, newPayload, err := j.CreateAccessToken(email, role, time.Minute)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to create new access token: %w", err)
+	}
+
+	return newAccessToken, newPayload, nil
 }

@@ -161,7 +161,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		token, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), 60*time.Minute)
+		token, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), 30*time.Second)
 		mu.Lock()
 		defer mu.Unlock()
 		if err != nil {
@@ -175,7 +175,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		token, err := a.JwtMaker.CreateRefreshToken(user.Email, 60*time.Minute)
+		token, err := a.JwtMaker.CreateRefreshToken(user.Email, string(user.Role.Roles), 60*time.Minute)
 		mu.Lock()
 		defer mu.Unlock()
 		if err != nil {

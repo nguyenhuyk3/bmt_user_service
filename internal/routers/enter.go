@@ -1,9 +1,8 @@
 package routers
 
-import "user_service/internal/routers/auth"
-
 type RouterGroup struct {
-	Auth auth.AuthRouter
+	Auth     AuthRouter
+	Customer CustomerRouter
 }
 
-var UserServiceRouteGroup = new(RouterGroup)
+var UserServiceRouterGroup = new(RouterGroup)

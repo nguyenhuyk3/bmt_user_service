@@ -1,4 +1,4 @@
-package auth
+package routers
 
 import (
 	"log"
@@ -14,6 +14,7 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 	if err != nil {
 		log.Fatalf("cannot init auth controller: %v", err)
 	}
+
 	authRouterPublic := router.Group("/auth")
 	{
 		registrationRouterPublic := authRouterPublic.Group("/register")

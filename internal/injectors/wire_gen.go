@@ -11,10 +11,11 @@ import (
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
 	"user_service/internal/injectors/provider"
+	"user_service/internal/middlewares"
 	"user_service/utils/token/jwt"
 )
 
-// Injectors from auth.wire.go:
+// Injectors from auth.controller.wire.go:
 
 func InitAuthController() (*controllers.AuthController, error) {
 	pool := provider.ProvidePgxPool()
@@ -27,4 +28,26 @@ func InitAuthController() (*controllers.AuthController, error) {
 	iAuth := implementations.NewAuthService(sqlStore, iMaker)
 	authController := controllers.NewAuthController(iAuth)
 	return authController, nil
+}
+
+// Injectors from auth.middleware.wire.go:
+
+func InitAuthMiddleware() (*middlewares.AuthMiddleware, error) {
+	string2 := provider.ProvideSecretKey()
+	iMaker, err := jwt.NewJWTMaker(string2)
+	if err != nil {
+		return nil, err
+	}
+	authMiddleware := middlewares.NewAuthMiddleware(iMaker)
+	return authMiddleware, nil
+}
+
+// Injectors from customer.controller.wire.go:
+
+func InitCustomerController() (*controllers.CustomerController, error) {
+	pool := provider.ProvidePgxPool()
+	sqlStore := sqlc.NewStore(pool)
+	iCustomer := implementations.NewCustomerService(sqlStore)
+	customerController := controllers.NewCustomerController(iCustomer)
+	return customerController, nil
 }
