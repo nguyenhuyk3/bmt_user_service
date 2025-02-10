@@ -25,10 +25,10 @@ const (
 )
 
 const (
-	FIXED_IV = "aBcD1EfGhIjK2LmN"
+	REGISTRATION_PURPOSE    = "registration"
+	FORGOT_PASSWORD_PURPOSE = "forgot_password"
 )
 
 const (
-	REGISTRATION_PURPOSE    = "registration"
-	FORGOT_PASSWORD_PURPOSE = "forgot_password"
+	BLACK_LIST = "black_list::"
 )

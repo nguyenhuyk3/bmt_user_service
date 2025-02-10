@@ -25,7 +25,7 @@ func pkcs7Unpad(data []byte) []byte {
 	return data[:(length - unpadding)]
 }
 
-var fixedIV = []byte(global.FIXED_IV)
+var fixedIV = []byte(global.Config.Server.FixedIv)
 
 func AesEncrypt(text string) (string, error) {
 	keyBytes := []byte(global.Config.Server.SercetKey)

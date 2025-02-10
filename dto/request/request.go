@@ -31,3 +31,7 @@ type CompleteForgotPasswordReq struct {
 type GetInforReq struct {
 	Email string `json:"email" binding:"required,email"`
 }
+
+type LogoutReq struct {
+	Token string `json:"token" binding:"required,token"`
+}

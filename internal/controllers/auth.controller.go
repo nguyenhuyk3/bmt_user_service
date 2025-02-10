@@ -148,3 +148,24 @@ func (ac *AuthController) CompleteForgotPassword(c *gin.Context) {
 
 	responses.SuccessResponse(c, http.StatusOK, "updating password perform successfully", nil)
 }
+
+func (ac *AuthController) Logout(c *gin.Context) {
+	token := c.GetString("token")
+	if token == "" {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is not exist")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	status, err := ac.AuthService.Logout(ctx, request.LogoutReq{
+		Token: token,
+	})
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "logout perform successfully", nil)
+}

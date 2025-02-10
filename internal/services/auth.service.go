@@ -22,8 +22,13 @@ type IForgotPassword interface {
 	CompleForgotPassword(ctx context.Context, arg request.CompleteForgotPasswordReq) (int, error)
 }
 
+type ILogout interface {
+	Logout(ctx context.Context, arg request.LogoutReq) (int, error)
+}
+
 type IAuth interface {
 	IRegistration
 	ILogin
 	IForgotPassword
+	ILogout
 }

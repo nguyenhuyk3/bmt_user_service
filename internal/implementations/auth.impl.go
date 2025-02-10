@@ -161,7 +161,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		token, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), 30*time.Second)
+		token, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles), 10*time.Minute)
 		mu.Lock()
 		defer mu.Unlock()
 		if err != nil {
@@ -351,6 +351,41 @@ func (a *authService) CompleForgotPassword(ctx context.Context, arg request.Comp
 
 	_ = redis.Delete(fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail))
 	_ = redis.Delete(key)
+
+	return http.StatusOK, nil
+}
+
+// Logout implements services.IAuth.
+func (a *authService) Logout(ctx context.Context, arg request.LogoutReq) (int, error) {
+	claims, err := a.JwtMaker.VerifyAccessToken(arg.Token)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	ttl := time.Until(claims.ExpiredAt)
+	if ttl <= 0 {
+		return http.StatusOK, nil
+	}
+
+	key := fmt.Sprintf("%s%s", global.BLACK_LIST, arg.Token)
+	err = redis.Save(key, "revoked", int64(ttl.Minutes()))
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	_, err = a.SqlStore.Queries.UpdateAction(ctx, sqlc.UpdateActionParams{
+		Email: claims.Email,
+		LoginAt: pgtype.Timestamptz{
+			Valid: false,
+		},
+		LogoutAt: pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: false,
+		},
+	})
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
 
 	return http.StatusOK, nil
 }

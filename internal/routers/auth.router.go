@@ -25,6 +25,7 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 		}
 
 		authRouterPublic.POST("/login", authController.Login)
+		authRouterPublic.POST("/logout", authController.Logout)
 
 		forgotPasswordRouterPublic := authRouterPublic.Group("/forgot_password")
 		{
@@ -32,5 +33,6 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 			forgotPasswordRouterPublic.POST("verify_forgot_password_otp", authController.VerifyForgotPasswordOtp)
 			forgotPasswordRouterPublic.PUT("complete_forgot_password", authController.CompleteForgotPassword)
 		}
+
 	}
 }

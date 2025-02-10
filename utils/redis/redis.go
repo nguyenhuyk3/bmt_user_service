@@ -23,7 +23,7 @@ func Save(key string, value interface{}, expirationTime int64) error {
 
 	err = global.RDb.SetEx(ctx, key, jsonValue, time.Duration(expirationTime)*time.Minute).Err()
 	if err != nil {
-		return fmt.Errorf("failed to save OTP: %w", err)
+		return fmt.Errorf("failed to save value: %w", err)
 	}
 
 	return nil
@@ -34,7 +34,6 @@ func ExistsKey(key string) bool {
 	if err != nil {
 		return false
 	}
-
 	// `count > 0` means the key exists
 	return count > 0
 }
@@ -54,6 +53,7 @@ func Get(key string, result interface{}) error {
 		if err == redis.Nil {
 			return fmt.Errorf("key %s does not exist", key)
 		}
+
 		return fmt.Errorf("failed to get value: %w", err)
 	}
 

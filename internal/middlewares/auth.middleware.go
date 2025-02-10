@@ -49,25 +49,25 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 				if refreshToken == "" {
 					responses.FailureResponse(c, http.StatusUnauthorized, "no refresh token provided")
 					c.Abort()
+
 					return
 				}
-
 				// Step 3: Verify and refresh access token using refresh token
 				newAccessToken, _, refreshErr := am.JwtMaker.RefreshAccessToken(refreshToken)
 				if refreshErr != nil {
 					responses.FailureResponse(c, http.StatusUnauthorized, fmt.Sprintf("failed to refresh token: %v", refreshErr))
 					c.Abort()
+
 					return
 				}
-
 				// Return the new access token to the client
 				c.Header("X-New-Access-Token", newAccessToken)
 				// Optionally set the new access token in the context for downstream handlers
 				c.Set("access_token", newAccessToken)
 				c.Next()
+
 				return
 			}
-
 			// Handle other errors (invalid token, etc.)
 			responses.FailureResponse(c, http.StatusUnauthorized, fmt.Sprintf("%v", err))
 			c.Abort()
@@ -76,6 +76,31 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 
 		c.Set("role", claims.Role)
 		c.Set("email", claims.Email)
+		c.Next()
+	}
+}
+
+func (am *AuthMiddleware) GetAccessToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			responses.FailureResponse(c, http.StatusUnauthorized, "unauthorized: no token provided")
+			c.Abort()
+
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			responses.FailureResponse(c, http.StatusUnauthorized, "invalid Authorization header format")
+			c.Abort()
+
+			return
+		}
+
+		token := parts[1]
+
+		c.Set("token", token)
 		c.Next()
 	}
 }
