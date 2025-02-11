@@ -140,7 +140,7 @@ func (ac *AuthController) CompleteForgotPassword(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.CompleForgotPassword(ctx, req)
+	status, err := ac.AuthService.CompleteForgotPassword(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -150,8 +150,8 @@ func (ac *AuthController) CompleteForgotPassword(c *gin.Context) {
 }
 
 func (ac *AuthController) Logout(c *gin.Context) {
-	token := c.GetString("token")
-	if token == "" {
+	email := c.GetString("email")
+	if email == "" {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is not exist")
 		return
 	}
@@ -159,9 +159,7 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.Logout(ctx, request.LogoutReq{
-		Token: token,
-	})
+	status, err := ac.AuthService.Logout(ctx, email)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return

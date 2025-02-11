@@ -33,5 +33,5 @@ type GetInforReq struct {
 }
 
 type LogoutReq struct {
-	Token string `json:"token" binding:"required,token"`
+	RefreshToken string `json:"refresh_token" binding:"required"`
 }

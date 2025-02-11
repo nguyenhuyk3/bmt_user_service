@@ -21,7 +21,7 @@ func initRouter() *gin.Engine {
 
 	mainGroup := r.Group("/v1")
 	{
-		authRouter.InitAuthRouter(mainGroup)
+		authRouter.InitAuthRouter(mainGroup, authMiddleware)
 		customerRouter.InitCustomerRouter(mainGroup, authMiddleware)
 	}
 

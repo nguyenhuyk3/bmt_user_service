@@ -3,13 +3,14 @@ package routers
 import (
 	"log"
 	"user_service/internal/injectors"
+	"user_service/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthRouter struct{}
 
-func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
+func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup, authMiddleware *middlewares.AuthMiddleware) {
 	authController, err := injectors.InitAuthController()
 	if err != nil {
 		log.Fatalf("cannot init auth controller: %v", err)
@@ -25,7 +26,11 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup) {
 		}
 
 		authRouterPublic.POST("/login", authController.Login)
-		authRouterPublic.POST("/logout", authController.Logout)
+		authRouterPublic.POST("/logout",
+			authMiddleware.GetAccessToken(),
+			authMiddleware.GetRefreshToken(),
+			authMiddleware.DestroyToken(),
+			authController.Logout)
 
 		forgotPasswordRouterPublic := authRouterPublic.Group("/forgot_password")
 		{

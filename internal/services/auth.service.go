@@ -19,11 +19,11 @@ type ILogin interface {
 type IForgotPassword interface {
 	SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error)
 	VerifyForgotPasswordOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error)
-	CompleForgotPassword(ctx context.Context, arg request.CompleteForgotPasswordReq) (int, error)
+	CompleteForgotPassword(ctx context.Context, arg request.CompleteForgotPasswordReq) (int, error)
 }
 
 type ILogout interface {
-	Logout(ctx context.Context, arg request.LogoutReq) (int, error)
+	Logout(ctx context.Context, email string) (int, error)
 }
 
 type IAuth interface {
