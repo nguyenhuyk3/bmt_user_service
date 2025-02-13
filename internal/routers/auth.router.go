@@ -38,6 +38,5 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup, authMiddleware *mi
 			forgotPasswordRouterPublic.POST("verify_forgot_password_otp", authController.VerifyForgotPasswordOtp)
 			forgotPasswordRouterPublic.PUT("complete_forgot_password", authController.CompleteForgotPassword)
 		}
-
 	}
 }

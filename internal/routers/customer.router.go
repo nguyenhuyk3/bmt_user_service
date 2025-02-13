@@ -18,13 +18,13 @@ func (cr *CustomerRouter) InitCustomerRouter(router *gin.RouterGroup, authMiddle
 
 	customerRouterPublic := router.Group("/customer")
 	{
-		infoRouterPublic := customerRouterPublic.Group("/infor")
+		infoRouterPublic := customerRouterPublic.Group("/infor").Use(
+			authMiddleware.GetAccessToken(),
+			authMiddleware.CheckAccessTokenInBlackList(),
+			authMiddleware.CheckPermission(),
+		)
 		{
-			infoRouterPublic.GET("/get/:email",
-				authMiddleware.GetAccessToken(),
-				authMiddleware.CheckAccessTokenInBlackList(),
-				authMiddleware.CheckPermission(),
-				customerController.GetInfor)
+			infoRouterPublic.GET("/get/:email", customerController.GetInfor)
 		}
 	}
 }

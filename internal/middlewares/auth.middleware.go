@@ -119,7 +119,6 @@ func (am *AuthMiddleware) GetAccessToken() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
 		accessToken := parts[1]
 
 		c.Set("access_token", accessToken)

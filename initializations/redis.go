@@ -19,7 +19,6 @@ func initRedis() {
 		DB:       r.Database,
 		PoolSize: 10,
 	})
-
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
 		log.Fatalf("redis initialization error: %v", err)

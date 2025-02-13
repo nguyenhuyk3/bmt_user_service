@@ -103,7 +103,6 @@ func (a *authService) VerifyRegistrationOtp(ctx context.Context, arg request.Ver
 			map[string]interface{}{
 				"encrypted_email": result.EncryptedEmail,
 			}, 10)
-
 		return http.StatusOK, nil
 	}
 
@@ -145,7 +144,6 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 		if err == sql.ErrNoRows {
 			return result, http.StatusNotFound, errors.New("user not found")
 		}
-
 		return result, http.StatusInternalServerError, fmt.Errorf("failed to fetch user: %w", err)
 	}
 
@@ -244,7 +242,6 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 		res.Count = 0
 		_ = redis.Save(attemptKey, res, 3*60)
 	}
-
 	if res.Count > 2 {
 		_ = redis.Save(blockKey, map[string]interface{}{
 			"blocked": true,
@@ -303,17 +300,12 @@ func (a *authService) VerifyForgotPasswordOtp(ctx context.Context, arg request.V
 
 	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Email)
 
-	fmt.Println(arg)
-	fmt.Println(result)
-	fmt.Println(isMatch)
-
 	if isMatch == nil && arg.Otp == result.Otp {
 		_ = redis.Delete(forgotPasswordKey)
 		_ = redis.Save(fmt.Sprintf("%s%s", global.COMPLETE_FORGOT_PASSWORD_PROCESS, aesEncryptedEmail),
 			map[string]interface{}{
 				"encrypted_email": result.EncryptedEmail,
 			}, 10)
-
 		return http.StatusOK, nil
 	}
 
@@ -365,7 +357,7 @@ func (a *authService) Logout(ctx context.Context, email string) (int, error) {
 		},
 		LogoutAt: pgtype.Timestamptz{
 			Time:  time.Now(),
-			Valid: false,
+			Valid: true,
 		},
 	})
 	if err != nil {

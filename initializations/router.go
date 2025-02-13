@@ -18,7 +18,6 @@ func initRouter() *gin.Engine {
 	if err != nil {
 		log.Fatalf("An error occurred while initializing auth middleware: %v", err)
 	}
-
 	mainGroup := r.Group("/v1")
 	{
 		authRouter.InitAuthRouter(mainGroup, authMiddleware)

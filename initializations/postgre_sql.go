@@ -20,7 +20,6 @@ func initPostgreSql() {
 		fmt.Println("error connecting to the database:", err)
 		return
 	}
-
 	if err := db.Ping(ctx); err != nil {
 		fmt.Println("error pinging the database:", err)
 

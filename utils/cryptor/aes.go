@@ -33,12 +33,11 @@ func AesEncrypt(text string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create cipher: %v", err)
 	}
-
 	plaintext := []byte(text)
 	plaintext = pkcs7Pad(plaintext, aes.BlockSize)
 	ciphertext := make([]byte, len(plaintext))
-
 	stream := cipher.NewCBCEncrypter(block, fixedIV)
+
 	stream.CryptBlocks(ciphertext, plaintext)
 
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
@@ -51,17 +50,15 @@ func AesDecrypt(encryptedText string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedText)
 	if err != nil {
 		return "", fmt.Errorf("invalid base64 encoding: %v", err)
 	}
-
 	if len(ciphertext) < aes.BlockSize {
 		return "", fmt.Errorf("ciphertext is too short, must be at least %d bytes", aes.BlockSize)
 	}
-
 	mode := cipher.NewCBCDecrypter(block, fixedIV)
+
 	mode.CryptBlocks(ciphertext, ciphertext)
 
 	plaintext := pkcs7Unpad(ciphertext)
