@@ -49,7 +49,7 @@ func send(to []string, from string,
 	htmlTemplate string) error {
 	var subject string
 	switch purpose {
-	case global.REGISTRATION_OTP_KEY:
+	case global.REGISTRATION_PURPOSE:
 		subject = "Xác thực mã OTP"
 	case global.FORGOT_PASSWORD_PURPOSE:
 		subject = "Quên mật khẩu"

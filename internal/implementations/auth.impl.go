@@ -44,14 +44,14 @@ const (
 func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
 	// Check if email has otp in redis or not
 	encryptedAesEmail, _ := cryptor.AesEncrypt(arg.Email)
-	registrationOtpKey := fmt.Sprintf("%s%s", global.REGISTRATION_OTP_KEY, encryptedAesEmail)
+	registrationOtpKey := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedAesEmail)
 
 	isExists := redis.ExistsKey(registrationOtpKey)
 	if isExists {
 		return http.StatusConflict, errors.New("email is in registration status")
 	}
 
-	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
+	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
 
 	isExists = redis.ExistsKey(completeRegistrationProcessKey)
 	if isExists {
@@ -96,7 +96,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 // VerifyRegistrationOtp implements services.IAuthUser.
 func (a *authService) VerifyRegistrationOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
 	encryptedEmail, _ := cryptor.AesEncrypt(arg.Email)
-	key := fmt.Sprintf("%s%s", global.REGISTRATION_OTP_KEY, encryptedEmail)
+	key := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedEmail)
 
 	var result verifyOtp
 
@@ -108,7 +108,7 @@ func (a *authService) VerifyRegistrationOtp(ctx context.Context, arg request.Ver
 	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Email)
 	if isMatch == nil && arg.Otp == result.Otp {
 		_ = redis.Delete(key)
-		_ = redis.Save(fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, encryptedEmail),
+		_ = redis.Save(fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedEmail),
 			map[string]interface{}{
 				"encrypted_email": result.EncryptedEmail,
 			}, ten_minutes)
@@ -122,7 +122,7 @@ func (a *authService) VerifyRegistrationOtp(ctx context.Context, arg request.Ver
 // CompleteRegister implements services.IAuth.
 func (a *authService) CompleteRegistration(ctx context.Context, arg request.CompleteRegistrationReq) (int, error) {
 	encryptedEmail, _ := cryptor.AesEncrypt(arg.Account.Email)
-	key := fmt.Sprintf("%s%s", global.COMPLETE_REGISTRATION_PROCESS, encryptedEmail)
+	key := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedEmail)
 
 	var result verifyOtp
 
