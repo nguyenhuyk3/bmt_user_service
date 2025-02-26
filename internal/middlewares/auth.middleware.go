@@ -122,12 +122,14 @@ func (am *AuthMiddleware) GetAccessToken() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 			responses.FailureResponse(c, http.StatusUnauthorized, "invalid Authorization header format")
 			c.Abort()
 			return
 		}
+
 		accessToken := parts[1]
 
 		c.Set(access_token, accessToken)

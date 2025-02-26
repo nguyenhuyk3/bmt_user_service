@@ -44,7 +44,6 @@ func (s *SqlStore) execTran(ctx context.Context, fn func(*Queries) error) error 
 	return tran.Commit(ctx)
 }
 
-// InsertFullAccount implements Store.
 func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq) error {
 	err := s.execTran(ctx, func(q *Queries) error {
 		var role NullRoles
@@ -68,6 +67,7 @@ func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRe
 		if err != nil {
 			return fmt.Errorf("failed to scan sex: %v", err)
 		}
+
 		err = q.InsertUserInfo(ctx, InsertUserInfoParams{
 			Email: pgtype.Text{
 				String: arg.Account.Email,
