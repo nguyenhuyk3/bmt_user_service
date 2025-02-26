@@ -27,6 +27,7 @@ func (ac *AuthController) SendRegistrationOtp(c *gin.Context) {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -35,6 +36,7 @@ func (ac *AuthController) SendRegistrationOtp(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "send otp perform successfully", nil)
 }
 
@@ -44,6 +46,7 @@ func (ac *AuthController) VerifyRegistrationOtp(c *gin.Context) {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -52,6 +55,7 @@ func (ac *AuthController) VerifyRegistrationOtp(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "verify otp perform successfully", nil)
 }
 
@@ -61,6 +65,7 @@ func (ac *AuthController) CompleteRegistration(c *gin.Context) {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -69,6 +74,7 @@ func (ac *AuthController) CompleteRegistration(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "registration perform successfully", nil)
 }
 
@@ -78,6 +84,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -86,6 +93,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "login perform successfully", data)
 }
 
@@ -95,6 +103,7 @@ func (ac *AuthController) SendForgotPasswordOtp(c *gin.Context) {
 		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
 		return
 	}
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
@@ -103,6 +112,7 @@ func (ac *AuthController) SendForgotPasswordOtp(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "send otp perform successfully", nil)
 }
 
@@ -121,6 +131,7 @@ func (ac *AuthController) VerifyForgotPasswordOtp(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "verifying otp for forgot password perform successfully", nil)
 }
 
@@ -139,6 +150,7 @@ func (ac *AuthController) CompleteForgotPassword(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "updating password perform successfully", nil)
 }
 
@@ -157,5 +169,6 @@ func (ac *AuthController) Logout(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "logout perform successfully", nil)
 }

@@ -36,5 +36,6 @@ func (cc *CustomerController) GetInfor(c *gin.Context) {
 		responses.FailureResponse(c, status, err.Error())
 		return
 	}
+
 	responses.SuccessResponse(c, http.StatusOK, "get infor perform successfully", data)
 }

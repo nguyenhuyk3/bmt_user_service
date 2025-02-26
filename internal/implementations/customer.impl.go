@@ -28,7 +28,6 @@ func (c *customerService) GetInfor(ctx context.Context, arg request.GetInforReq)
 		String: arg.Email,
 		Valid:  true,
 	})
-
 	if err != nil {
 		return response.GetInfoRes{}, http.StatusInternalServerError, fmt.Errorf("error occurs when get info: %v", err)
 	}

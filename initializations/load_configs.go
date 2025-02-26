@@ -41,6 +41,7 @@ func loadConfigsFromYAML() {
 	if err != nil {
 		log.Fatal("error loading .yaml file")
 	}
+
 	err = viper.Unmarshal(&global.Config.ServiceSetting)
 	if err != nil {
 		log.Fatalf("unable to decode into struct (yaml), %v", err)

@@ -15,11 +15,13 @@ func initPostgreSql() {
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.Host, config.Port, config.Username, config.Password, dbName)
 	ctx := context.Background()
+
 	db, err := pgxpool.New(ctx, connStr)
 	if err != nil {
 		fmt.Println("error connecting to the database:", err)
 		return
 	}
+
 	if err := db.Ping(ctx); err != nil {
 		fmt.Println("error pinging the database:", err)
 
