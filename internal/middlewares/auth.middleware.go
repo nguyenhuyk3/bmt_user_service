@@ -14,6 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	access_token        = "access_token"
+	refresh_token       = "refresh_token"
+	x_refresh_token     = "X-Refresh-Token"
+	x_new_refresh_token = "X-New-Refresh-Token"
+)
+
 type AuthMiddleware struct {
 	JwtMaker jwt.IMaker
 }
@@ -26,13 +33,14 @@ func NewAuthMiddleware(jwtMake jwt.IMaker) *AuthMiddleware {
 
 func (am *AuthMiddleware) CheckAccessTokenInBlackList() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken := c.GetString("access_token")
+		accessToken := c.GetString(access_token)
 		if accessToken == "" {
 			responses.FailureResponse(c, http.StatusBadRequest, "access token is not provided")
 			c.Abort()
 			return
 		}
-		isExists := redis.ExistsKey(fmt.Sprintf("%s%s", global.BLACK_LIST, accessToken))
+
+		isExists := redis.ExistsKey(fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, accessToken))
 		if isExists {
 			responses.FailureResponse(c, http.StatusUnauthorized, "access token is expired")
 			c.Abort()
@@ -45,13 +53,14 @@ func (am *AuthMiddleware) CheckAccessTokenInBlackList() gin.HandlerFunc {
 
 func (am *AuthMiddleware) CheckRefreshTokenInBlackList() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		refreshToken := c.GetHeader("X-Refresh-Token")
+		refreshToken := c.GetHeader(x_refresh_token)
 		if refreshToken == "" {
 			responses.FailureResponse(c, http.StatusUnauthorized, "no refresh token provided")
 			c.Abort()
 			return
 		}
-		isExists := redis.ExistsKey(fmt.Sprintf("%s%s", global.BLACK_LIST, refreshToken))
+
+		isExists := redis.ExistsKey(fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, refreshToken))
 		if isExists {
 			responses.FailureResponse(c, http.StatusUnauthorized, "refresh token is expired")
 			c.Abort()
@@ -64,7 +73,7 @@ func (am *AuthMiddleware) CheckRefreshTokenInBlackList() gin.HandlerFunc {
 
 func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken := c.GetString("access_token")
+		accessToken := c.GetString(access_token)
 		if accessToken == "" {
 			responses.FailureResponse(c, http.StatusBadRequest, "access token is not provided")
 			c.Abort()
@@ -76,7 +85,7 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 			// Step 2: If access token is expired, attempt to refresh with refresh token
 			if err.Error() == jwt.ExpiredTokenErr.Error() {
 				// Get the refresh token from request header
-				refreshToken := c.GetHeader("X-Refresh-Token")
+				refreshToken := c.GetHeader(x_refresh_token)
 				if refreshToken == "" {
 					responses.FailureResponse(c, http.StatusUnauthorized, "no refresh token provided")
 					c.Abort()
@@ -90,7 +99,7 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 					return
 				}
 				// Return the new access token to the client
-				c.Header("X-New-Refresh-Token", newAccessToken)
+				c.Header(x_new_refresh_token, newAccessToken)
 				c.Next()
 				return
 			}
@@ -121,7 +130,7 @@ func (am *AuthMiddleware) GetAccessToken() gin.HandlerFunc {
 		}
 		accessToken := parts[1]
 
-		c.Set("access_token", accessToken)
+		c.Set(access_token, accessToken)
 		c.Next()
 	}
 }
@@ -135,36 +144,44 @@ func (am *AuthMiddleware) GetRefreshToken() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("refresh_token", req.RefreshToken)
+		c.Set(refresh_token, req.RefreshToken)
 		c.Next()
 	}
 }
 
 func (am *AuthMiddleware) DestroyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		accessToken := c.GetString("access_token")
+		accessToken := c.GetString(access_token)
 		if accessToken == "" {
 			responses.FailureResponse(c, http.StatusBadRequest, "access token is not provided")
 			c.Abort()
 			return
 		}
-		refreshToken := c.GetString("refresh_token")
+
+		refreshToken := c.GetString(refresh_token)
 		if refreshToken == "" {
 			responses.FailureResponse(c, http.StatusBadRequest, "refresh token is not provided")
 			c.Abort()
 			return
 		}
+
 		accessClaims, err := am.JwtMaker.VerifyAccessToken(accessToken)
-		fmt.Println(err)
+		if err != nil {
+			responses.FailureResponse(c, http.StatusInternalServerError, err.Error())
+			c.Abort()
+			return
+		}
+
 		ttl := time.Until(accessClaims.ExpiredAt)
 		if ttl > 0 {
-			key := fmt.Sprintf("%s%s", global.BLACK_LIST, accessToken)
+			key := fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, accessToken)
 			_ = redis.Save(key, "revoked", int64(ttl.Minutes()))
 		}
+
 		refreshClaims, _ := am.JwtMaker.VerifyRefreshToken(refreshToken)
 		ttl = time.Until(refreshClaims.ExpiredAt)
 		if ttl > 0 {
-			key := fmt.Sprintf("%s%s", global.BLACK_LIST, refreshToken)
+			key := fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, refreshToken)
 			_ = redis.Save(key, "revoked", int64(ttl.Minutes()))
 		}
 

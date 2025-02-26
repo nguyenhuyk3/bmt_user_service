@@ -49,6 +49,7 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 		}
 		return []byte(j.secretKey), nil
 	}
+
 	parsedToken, err := jwt.ParseWithClaims(accessToken, &payload{}, keyFunc)
 	if err != nil {
 		vErr, ok := err.(*jwt.ValidationError)
@@ -57,10 +58,12 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 		}
 		return nil, InvalidTokenErr
 	}
+
 	payload, ok := parsedToken.Claims.(*payload)
 	if !ok || !parsedToken.Valid {
 		return nil, InvalidTokenErr
 	}
+
 	return payload, nil
 }
 
