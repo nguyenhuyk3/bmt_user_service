@@ -24,6 +24,7 @@ func NewJWTMaker(secretKey string) (IMaker, error) {
 	if len(secretKey) < min_secret_key_size {
 		return nil, fmt.Errorf("invalid key size: must be at least %d characters", min_secret_key_size)
 	}
+
 	return &JWTMaker{secretKey}, nil
 }
 
@@ -33,6 +34,7 @@ func (j *JWTMaker) CreateAccessToken(email string, role string) (string, *payloa
 	if err != nil {
 		return "", payload, err
 	}
+
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	// Sign token with private key
 	token, err := jwtToken.SignedString([]byte(j.secretKey))
@@ -47,6 +49,7 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 		if !ok {
 			return nil, InvalidTokenErr
 		}
+
 		return []byte(j.secretKey), nil
 	}
 
@@ -56,6 +59,7 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 		if ok && errors.Is(vErr.Inner, ExpiredTokenErr) {
 			return nil, ExpiredTokenErr
 		}
+
 		return nil, InvalidTokenErr
 	}
 
@@ -91,6 +95,7 @@ func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*payload, error) {
 		if !ok {
 			return nil, InvalidTokenErr
 		}
+
 		return []byte(j.secretKey), nil
 	}
 	// Parse the token
@@ -107,6 +112,7 @@ func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*payload, error) {
 	if !ok || !parsedToken.Valid {
 		return nil, InvalidTokenErr
 	}
+
 	return claims, nil
 }
 
@@ -116,6 +122,7 @@ func (j *JWTMaker) RefreshAccessToken(refreshToken string) (string, *payload, er
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid refresh token: %w", err)
 	}
+
 	newAccessToken, newPayload, err := j.CreateAccessToken(claims.Email, claims.Role)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create new access token: %w", err)

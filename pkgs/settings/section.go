@@ -25,6 +25,7 @@ type serverSetting struct {
 	APIKey       string `mapstructure:"API_KEY"`
 	SercetKey    string `mapstructure:"SERCET_KEY"`
 	LengthOfSalt int    `mapstructure:"LENGTH_OF_SALT"`
+	Issuer       string `mapstructure:"ISS"`
 	FixedIv      string `mapstructure:"FIXED_IV"`
 }
 
