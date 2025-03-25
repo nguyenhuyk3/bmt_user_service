@@ -68,7 +68,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 		return http.StatusConflict, errors.New("email already exists")
 	}
 
-	otp, _ := generator.GenerateNumberBasedOnLength(6)
+	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 	encryptedBcryptEmail, _ := cryptor.BcryptHashInput(arg.Email)
 	// Save email and otp is in registration status
 	_ = redis.Save(registrationOtpKey, verifyOtp{
@@ -253,7 +253,6 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail)
 	// Check if this key has been blocked due to exceeding 3 email attempts
 	blockKey := fmt.Sprintf("%s%s", global.BLOCK_FORGOT_PASSWORD_KEY, aesEncryptedEmail)
-
 	blockedTTL, err := redis.GetTTL(blockKey)
 	if err == nil && blockedTTL > 0 {
 		_ = redis.Delete(attemptKey)
@@ -284,7 +283,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 		return http.StatusTooManyRequests, fmt.Errorf("please try again later %v", remainingTime)
 	}
 
-	otp, _ := generator.GenerateNumberBasedOnLength(6)
+	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 	err = mail.SendTemplateEmailOtp([]string{arg.Email},
 		global.Config.Server.FromEmail,
 		"forgot_password_otp_email.html",
