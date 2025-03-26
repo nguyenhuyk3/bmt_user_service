@@ -25,14 +25,14 @@ func pkcs7Unpad(data []byte) []byte {
 	return data[:(length - unpadding)]
 }
 
-var fixedIV = []byte(global.Config.Server.FixedIv)
-
 func AesEncrypt(text string) (string, error) {
 	keyBytes := []byte(global.Config.Server.SercetKey)
+	fixedIV := []byte(global.Config.Server.FixedIv)
 	block, err := aes.NewCipher(keyBytes[:32])
 	if err != nil {
 		return "", fmt.Errorf("failed to create cipher: %v", err)
 	}
+
 	plaintext := []byte(text)
 	plaintext = pkcs7Pad(plaintext, aes.BlockSize)
 	ciphertext := make([]byte, len(plaintext))
@@ -46,17 +46,21 @@ func AesEncrypt(text string) (string, error) {
 // Decrypt decrypt text
 func AesDecrypt(encryptedText string) (string, error) {
 	keyBytes := []byte(global.Config.Server.SercetKey)
+	fixedIV := []byte(global.Config.Server.FixedIv)
 	block, err := aes.NewCipher(keyBytes[:32])
 	if err != nil {
 		return "", err
 	}
+
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedText)
 	if err != nil {
 		return "", fmt.Errorf("invalid base64 encoding: %v", err)
 	}
+
 	if len(ciphertext) < aes.BlockSize {
 		return "", fmt.Errorf("ciphertext is too short, must be at least %d bytes", aes.BlockSize)
 	}
+
 	mode := cipher.NewCBCDecrypter(block, fixedIV)
 
 	mode.CryptBlocks(ciphertext, ciphertext)

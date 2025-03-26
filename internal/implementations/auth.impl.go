@@ -9,10 +9,12 @@ import (
 	"sync"
 	"time"
 	"user_service/db/sqlc"
+	"user_service/dto/messages"
 	"user_service/dto/request"
 	"user_service/dto/response"
 	"user_service/global"
 	"user_service/internal/services"
+	messagebroker "user_service/pkgs/message_broker"
 	"user_service/utils/cryptor"
 	"user_service/utils/generator"
 	"user_service/utils/redis"
@@ -40,9 +42,36 @@ const (
 	three_hours   = 3 * 60
 )
 
+// func sendOtpToKafka(message messages.MailMessage) error {
+// 	writer := kafka.NewWriter(kafka.WriterConfig{
+// 		Brokers: []string{"localhost:9092"},
+// 		Topic:   global.REGISTRATION_OTP_EMAIL,
+// 	})
+// 	defer writer.Close()
+// 	// Encode message to JSON
+// 	messageBytes, err := json.Marshal(message)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	// Send message to Kafka
+// 	err = writer.WriteMessages(context.Background(), kafka.Message{
+// 		Key:   []byte(message.Type),
+// 		Value: messageBytes,
+// 	})
+
+// 	return err
+// }
+
+/*
+SendRegistrationOtp will consist of 3 steps:
+	- Step 1: Check in redis whether the registered email has an otp code or not
+				(If the otp code exists, the email is in the registration process)
+	- Step 2: If step 1 is passed, check whether the registered email is in the process of completion or not
+	- Step 3: If the above steps are passed, start sending the OTP code
+*/
 // SendRegistrationOtp implements services.IAuthUser.
 func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
-	// Check if email has otp in redis or not
+	// Step 1
 	encryptedAesEmail, _ := cryptor.AesEncrypt(arg.Email)
 	registrationOtpKey := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedAesEmail)
 
@@ -50,24 +79,21 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 	if isExists {
 		return http.StatusConflict, errors.New("email is in registration status")
 	}
-
+	// Step 2
 	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
-
 	isExists = redis.ExistsKey(completeRegistrationProcessKey)
 	if isExists {
 		return http.StatusConflict, errors.New("email is in complete registration process")
 	}
-
 	// Check if email already exists or not
 	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, arg.Email)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
 	}
-
 	if isExists {
 		return http.StatusConflict, errors.New("email already exists")
 	}
-
+	// Step 3
 	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 	encryptedBcryptEmail, _ := cryptor.BcryptHashInput(arg.Email)
 	// Save email and otp is in registration status
@@ -75,19 +101,18 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 		EncryptedEmail: encryptedBcryptEmail,
 		Otp:            otp,
 	}, ten_minutes)
-	err = mail.SendTemplateEmailOtp([]string{arg.Email},
-		global.Config.Server.FromEmail,
-		"registration_otp_email.html",
-		global.REGISTRATION_PURPOSE,
-		map[string]interface{}{
-			"otp":             otp,
-			"from_email":      global.Config.Server.FromEmail,
-			"expiration_time": ten_minutes,
-		})
-
+	message := messages.MailMessage{
+		Type: global.REGISTRATION_OTP_EMAIL,
+		Payload: messages.OtpMessage{
+			Email:          arg.Email,
+			Otp:            otp,
+			ExpirationTime: ten_minutes,
+		},
+	}
+	err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL, message.Type, message)
 	if err != nil {
 		redis.Delete(registrationOtpKey)
-		return http.StatusInternalServerError, errors.New("failed to send mail, please try again later")
+		return http.StatusInternalServerError, errors.New("failed to send OTP to Kafka")
 	}
 
 	return http.StatusOK, nil

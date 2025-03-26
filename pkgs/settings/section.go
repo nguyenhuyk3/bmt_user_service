@@ -22,11 +22,11 @@ type serviceSetting struct {
 type serverSetting struct {
 	ServerPort   string `mapstructure:"SERVER_PORT"`
 	FromEmail    string `mapstructure:"FROM_EMAIL"`
-	APIKey       string `mapstructure:"API_KEY"`
 	SercetKey    string `mapstructure:"SERCET_KEY"`
 	LengthOfSalt int    `mapstructure:"LENGTH_OF_SALT"`
 	Issuer       string `mapstructure:"ISS"`
 	FixedIv      string `mapstructure:"FIXED_IV"`
+	KafkaBroker  string `mapstructure:"KAFKA_BROKER"`
 }
 
 type postgreSetting struct {

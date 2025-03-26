@@ -29,7 +29,7 @@ func loadConfigsFromENV() {
 		log.Fatalf("unable to decode into struct (env), %v", err)
 	}
 
-	fmt.Println(global.Config.Server)
+	fmt.Println(global.Config.Server.FixedIv)
 }
 
 func loadConfigsFromYAML() {
