@@ -18,7 +18,6 @@ import (
 	"user_service/utils/cryptor"
 	"user_service/utils/generator"
 	"user_service/utils/redis"
-	mail "user_service/utils/sender"
 	"user_service/utils/token/jwt"
 
 	"github.com/jackc/pgx/v5/pgtype"
@@ -42,26 +41,6 @@ const (
 	three_hours   = 3 * 60
 )
 
-// func sendOtpToKafka(message messages.MailMessage) error {
-// 	writer := kafka.NewWriter(kafka.WriterConfig{
-// 		Brokers: []string{"localhost:9092"},
-// 		Topic:   global.REGISTRATION_OTP_EMAIL,
-// 	})
-// 	defer writer.Close()
-// 	// Encode message to JSON
-// 	messageBytes, err := json.Marshal(message)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	// Send message to Kafka
-// 	err = writer.WriteMessages(context.Background(), kafka.Message{
-// 		Key:   []byte(message.Type),
-// 		Value: messageBytes,
-// 	})
-
-// 	return err
-// }
-
 /*
 SendRegistrationOtp will consist of 3 steps:
 	- Step 1: Check in redis whether the registered email has an otp code or not
@@ -71,7 +50,7 @@ SendRegistrationOtp will consist of 3 steps:
 */
 // SendRegistrationOtp implements services.IAuthUser.
 func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
-	// Step 1
+	// * Step 1
 	encryptedAesEmail, _ := cryptor.AesEncrypt(arg.Email)
 	registrationOtpKey := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedAesEmail)
 
@@ -79,7 +58,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 	if isExists {
 		return http.StatusConflict, errors.New("email is in registration status")
 	}
-	// Step 2
+	// * Step 2
 	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
 	isExists = redis.ExistsKey(completeRegistrationProcessKey)
 	if isExists {
@@ -93,7 +72,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 	if isExists {
 		return http.StatusConflict, errors.New("email already exists")
 	}
-	// Step 3
+	// * Step 3
 	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 	encryptedBcryptEmail, _ := cryptor.BcryptHashInput(arg.Email)
 	// Save email and otp is in registration status
@@ -262,8 +241,18 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	return result, http.StatusOK, nil
 }
 
+/*
+SendForgotPasswordOtp will include 6 steps:
+	- Step 1: Check if the email exists before
+	- Step 2: Check if this email is locked (check blockKey) or not (avoid spam)
+	- Step 3: Check how many times this email has been sent, if more than 2 times, a key (blockKey) will be created in redis (within 3 hours)
+	- Step 4: Check if the email has an expired otp code or not (check forgotPasswordKey), because each email will exist for 3 minutes and after 3 minutes it can only be sent once more
+	- Step 5: If it passes the above conditions, the email will be sent
+	- Step 6: If the email is sent successfully, we will increase the attempKey by 1
+*/
 // SendForgotPasswordOtp implements services.IAuth.
 func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
+	// * Step 1
 	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, arg.Email)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
@@ -274,6 +263,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	}
 
 	aesEncryptedEmail, _ := cryptor.AesEncrypt(arg.Email)
+	// * Step 2
 	// This key will keep track of how many times the email has been sent.
 	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail)
 	// Check if this key has been blocked due to exceeding 3 email attempts
@@ -284,10 +274,12 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 		return http.StatusTooManyRequests, fmt.Errorf("you cannot make a request in: %v", blockedTTL)
 	}
 
+	// * Step 3
 	var res blockSendForgotPasswordOtp
 
 	err = redis.Get(attemptKey, &res)
 	if err != nil {
+		// This code will be perform at first
 		res.Count = 0
 		_ = redis.Save(attemptKey, res, three_hours)
 	}
@@ -300,6 +292,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 
 		return http.StatusTooManyRequests, errors.New("you can't do the request in 3 hours")
 	}
+	// * Step 4
 	// This key will hold the value of the otp code
 	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, aesEncryptedEmail)
 	// Check remaining time of this key
@@ -307,17 +300,27 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	if remainingTime > 0 {
 		return http.StatusTooManyRequests, fmt.Errorf("please try again later %v", remainingTime)
 	}
-
+	// * Step 5
 	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
-	err = mail.SendTemplateEmailOtp([]string{arg.Email},
-		global.Config.Server.FromEmail,
-		"forgot_password_otp_email.html",
-		global.FORGOT_PASSWORD_PURPOSE,
-		map[string]interface{}{
-			"otp":             otp,
-			"from_email":      global.Config.Server.FromEmail,
-			"expiration_time": three_minutes,
-		})
+	message := messages.MailMessage{
+		Type: global.FORGOT_PASSWORD_OTP_EMAIL,
+		Payload: messages.OtpMessage{
+			Email:          arg.Email,
+			Otp:            otp,
+			ExpirationTime: three_minutes,
+		},
+	}
+	// * Step 6
+	err = messagebroker.SendMessage(global.FORGOT_PASSWORD_OTP_EMAIL, message.Type, message)
+	// err = mail.SendTemplateEmailOtp([]string{arg.Email},
+	// 	global.Config.Server.FromEmail,
+	// 	"forgot_password_otp_email.html",
+	// 	global.FORGOT_PASSWORD_PURPOSE,
+	// 	map[string]interface{}{
+	// 		"otp":             otp,
+	// 		"from_email":      global.Config.Server.FromEmail,
+	// 		"expiration_time": three_minutes,
+	// 	})
 	if err == nil {
 		bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
 		_ = redis.Save(forgotPasswordKey, map[string]interface{}{

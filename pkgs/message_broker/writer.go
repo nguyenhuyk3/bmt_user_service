@@ -22,16 +22,44 @@ func initKafkaWriter() {
 		writer = &kafka.Writer{
 			Addr:     kafka.TCP(global.Config.Server.KafkaBroker),
 			Balancer: &kafka.LeastBytes{},
-			// Giảm thời gian chờ để gửi batch nhanh hơn
+			// Reduce wait times for faster batch submissions
 			BatchTimeout: 500 * time.Millisecond,
 		}
-		log.Println("Kafka producer initialized")
+		// log.Println("kafka producer initialized")
+	})
+}
+
+// Hàm kiểm tra và tạo topic nếu chưa tồn tại
+func ensureTopicExists(topic string) error {
+	conn, err := kafka.Dial("tcp", global.Config.Server.KafkaBroker)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// Kiểm tra danh sách topic
+	partitions, err := conn.ReadPartitions(topic)
+	if err == nil && len(partitions) > 0 {
+		// Topic đã tồn tại
+		return nil
+	}
+
+	// Tạo topic với 1 partition và replication-factor = 1
+	return conn.CreateTopics(kafka.TopicConfig{
+		Topic:             topic,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
 	})
 }
 
 func SendMessage(topic string, key string, value interface{}) error {
 	if writer == nil {
 		initKafkaWriter()
+	}
+
+	if err := ensureTopicExists(topic); err != nil {
+		log.Printf("failed to ensure topic exists: %v", err)
+		return err
 	}
 
 	msgBytes, err := json.Marshal(value)
@@ -46,18 +74,18 @@ func SendMessage(topic string, key string, value interface{}) error {
 	})
 
 	if err != nil {
-		log.Printf("Failed to send message to Kafka: %v", err)
+		log.Printf("failed to send message to Kafka: %v", err)
 		return err
 	}
 
-	log.Printf("Message sent to Kafka topic %s", topic)
+	log.Printf("message sent to Kafka topic %s", topic)
 	return nil
 }
 
 func Close() {
 	if writer != nil {
 		writer.Close()
-		log.Println("Kafka producer closed")
+		log.Println("kafka producer closed")
 	}
 
 	close(closeCh)
