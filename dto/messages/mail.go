@@ -1,7 +1,7 @@
 package messages
 
 type MailMessage struct {
-	Type    string      `json:"type" binding:"required"`
+	// Type    string      `json:"type" binding:"required"`
 	Payload interface{} `json:"payload" binding:"required"`
 }
 

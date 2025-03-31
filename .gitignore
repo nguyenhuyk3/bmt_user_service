@@ -1,4 +1,4 @@
-.env
-.yaml
-
+app.env
+local.yaml
+docker-compose.yaml
 /scripts

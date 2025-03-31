@@ -29,22 +29,21 @@ func initKafkaWriter() {
 	})
 }
 
-// Hàm kiểm tra và tạo topic nếu chưa tồn tại
+// Check if a topic already exists on the Kafka broker, and if not, automatically create it
 func ensureTopicExists(topic string) error {
+	// Connect to Kafka broker
 	conn, err := kafka.Dial("tcp", global.Config.Server.KafkaBroker)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
-
-	// Kiểm tra danh sách topic
+	// Check for topic existence
 	partitions, err := conn.ReadPartitions(topic)
 	if err == nil && len(partitions) > 0 {
-		// Topic đã tồn tại
+		// Topic is exists
 		return nil
 	}
-
-	// Tạo topic với 1 partition và replication-factor = 1
+	// Create topic with 1 partition and replication-factor = 1
 	return conn.CreateTopics(kafka.TopicConfig{
 		Topic:             topic,
 		NumPartitions:     1,
@@ -78,7 +77,7 @@ func SendMessage(topic string, key string, value interface{}) error {
 		return err
 	}
 
-	log.Printf("message sent to Kafka topic %s", topic)
+	// log.Printf("message sent to Kafka topic %s", topic)
 	return nil
 }
 

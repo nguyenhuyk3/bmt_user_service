@@ -81,14 +81,13 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 		Otp:            otp,
 	}, ten_minutes)
 	message := messages.MailMessage{
-		Type: global.REGISTRATION_OTP_EMAIL,
 		Payload: messages.OtpMessage{
 			Email:          arg.Email,
 			Otp:            otp,
 			ExpirationTime: ten_minutes,
 		},
 	}
-	err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL, message.Type, message)
+	err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL, global.REDIS_REGISTRATION_OTP_KEY, message)
 	if err != nil {
 		redis.Delete(registrationOtpKey)
 		return http.StatusInternalServerError, errors.New("failed to send OTP to Kafka")
@@ -303,7 +302,6 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	// * Step 5
 	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 	message := messages.MailMessage{
-		Type: global.FORGOT_PASSWORD_OTP_EMAIL,
 		Payload: messages.OtpMessage{
 			Email:          arg.Email,
 			Otp:            otp,
@@ -311,16 +309,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 		},
 	}
 	// * Step 6
-	err = messagebroker.SendMessage(global.FORGOT_PASSWORD_OTP_EMAIL, message.Type, message)
-	// err = mail.SendTemplateEmailOtp([]string{arg.Email},
-	// 	global.Config.Server.FromEmail,
-	// 	"forgot_password_otp_email.html",
-	// 	global.FORGOT_PASSWORD_PURPOSE,
-	// 	map[string]interface{}{
-	// 		"otp":             otp,
-	// 		"from_email":      global.Config.Server.FromEmail,
-	// 		"expiration_time": three_minutes,
-	// 	})
+	err = messagebroker.SendMessage(global.FORGOT_PASSWORD_OTP_EMAIL, global.FORGOT_PASSWORD_OTP_EMAIL, message)
 	if err == nil {
 		bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
 		_ = redis.Save(forgotPasswordKey, map[string]interface{}{
