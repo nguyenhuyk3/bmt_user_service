@@ -9,6 +9,7 @@ type serviceSetting struct {
 	PostgreSql   postgreSetting `mapstructure:"database"`
 	MailSetting  mailSetting    `mapstructure:"mail"`
 	RedisSetting redisSetting   `mapstructure:"redis"`
+	KafkaSetting kafkaSetting   `mapstructure:"kafka"`
 }
 
 // type BasicSetting struct {
@@ -26,7 +27,6 @@ type serverSetting struct {
 	LengthOfSalt int    `mapstructure:"LENGTH_OF_SALT"`
 	Issuer       string `mapstructure:"ISS"`
 	FixedIv      string `mapstructure:"FIXED_IV"`
-	KafkaBroker  string `mapstructure:"KAFKA_BROKER"`
 }
 
 type postgreSetting struct {
@@ -53,4 +53,10 @@ type redisSetting struct {
 	Username string `mapstructure:"username,omitempty"`
 	Password string `mapstructure:"password,omitempty"`
 	Database int    `mapstructure:"database,omitempty"`
+}
+
+type kafkaSetting struct {
+	KafkaBroker_1 string `mapstructure:"kafka_broker_1"`
+	KafkaBroker_2 string `mapstructure:"kafka_broker_2"`
+	KafkaBroker_3 string `mapstructure:"kafka_broker_3"`
 }

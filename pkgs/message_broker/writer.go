@@ -20,7 +20,9 @@ var (
 func initKafkaWriter() {
 	once.Do(func() {
 		writer = &kafka.Writer{
-			Addr:     kafka.TCP(global.Config.Server.KafkaBroker),
+			Addr: kafka.TCP(global.Config.ServiceSetting.KafkaSetting.KafkaBroker_1,
+				global.Config.ServiceSetting.KafkaSetting.KafkaBroker_2,
+				global.Config.ServiceSetting.KafkaSetting.KafkaBroker_3),
 			Balancer: &kafka.LeastBytes{},
 			// Reduce wait times for faster batch submissions
 			BatchTimeout: 500 * time.Millisecond,
@@ -32,7 +34,7 @@ func initKafkaWriter() {
 // Check if a topic already exists on the Kafka broker, and if not, automatically create it
 func ensureTopicExists(topic string) error {
 	// Connect to Kafka broker
-	conn, err := kafka.Dial("tcp", global.Config.Server.KafkaBroker)
+	conn, err := kafka.Dial("tcp", global.Config.ServiceSetting.KafkaSetting.KafkaBroker_1)
 	if err != nil {
 		return err
 	}

@@ -87,7 +87,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 			ExpirationTime: ten_minutes,
 		},
 	}
-	err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL, global.REDIS_REGISTRATION_OTP_KEY, message)
+	err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL, global.REGISTRATION_OTP_EMAIL, message)
 	if err != nil {
 		redis.Delete(registrationOtpKey)
 		return http.StatusInternalServerError, errors.New("failed to send OTP to Kafka")

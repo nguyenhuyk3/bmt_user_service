@@ -1,7 +1,6 @@
 package initializations
 
 import (
-	"fmt"
 	"log"
 	"user_service/global"
 
@@ -28,8 +27,6 @@ func loadConfigsFromENV() {
 	if err != nil {
 		log.Fatalf("unable to decode into struct (env), %v", err)
 	}
-
-	fmt.Println(global.Config.Server.FixedIv)
 }
 
 func loadConfigsFromYAML() {
