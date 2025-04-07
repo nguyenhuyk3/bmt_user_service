@@ -15,17 +15,34 @@ var (
 	writer  *kafka.Writer
 	once    sync.Once
 	closeCh = make(chan struct{})
+	// Store broker list for easy access
+	brokerAddresses []string
 )
 
 func initKafkaWriter() {
 	once.Do(func() {
+		brokerAddresses = []string{
+			global.Config.ServiceSetting.KafkaSetting.KafkaBroker_1,
+		}
+
+		validBrokers := []string{}
+		for _, addr := range brokerAddresses {
+			if addr != "" {
+				validBrokers = append(validBrokers, addr)
+			}
+		}
+
+		brokerAddresses = validBrokers
+		if len(brokerAddresses) == 0 {
+			// Exit if no broker is valid
+			log.Fatal("KAFKA FATAL: No valid broker addresses configured. Check ServiceSetting.KafkaSetting in config")
+		}
+
 		writer = &kafka.Writer{
-			Addr: kafka.TCP(global.Config.ServiceSetting.KafkaSetting.KafkaBroker_1,
-				global.Config.ServiceSetting.KafkaSetting.KafkaBroker_2,
-				global.Config.ServiceSetting.KafkaSetting.KafkaBroker_3),
+			Addr:     kafka.TCP(brokerAddresses...),
 			Balancer: &kafka.LeastBytes{},
 			// Reduce wait times for faster batch submissions
-			BatchTimeout: 500 * time.Millisecond,
+			BatchTimeout: 1 * time.Millisecond,
 		}
 		// log.Println("kafka producer initialized")
 	})
