@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -45,12 +44,12 @@ const (
 )
 
 /*
-SendRegistrationOtp will consist of 3 steps:
-	- Step 1: Check in redis whether the registered email has an otp code or not
-				(If the otp code exists, the email is in the registration process)
-	- Step 2: If step 1 is passed, check whether the registered email is in the process of completion or not
-	- Step 3: If the above steps are passed, start sending the OTP code
-*/
+* SendRegistrationOtp will consist of 3 steps:
+*	- Step 1: Check in redis whether the registered email has an otp code or not
+*				(If the otp code exists, the email is in the registration process)
+*	- Step 2: If step 1 is passed, check whether the registered email is in the process of completion or not
+*	- Step 3: If the above steps are passed, start sending the OTP code
+ */
 // SendRegistrationOtp implements services.IAuthUser.
 func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
 	// * Step 1
@@ -91,19 +90,14 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 		},
 	}
 
-	for i := 0; i < max_retry; i++ {
-		err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL_TOPIC, global.REGISTRATION_OTP_EMAIL_TOPIC, message)
-		if err == nil {
-			// Send successfully, break the loop
-			break
-		}
+	err = messagebroker.SendMessage(
+		global.REGISTRATION_OTP_EMAIL_TOPIC,
+		arg.Email,
+		message)
+	if err != nil {
+		redis.Delete(registrationOtpKey)
 
-		log.Printf("failed to send OTP to Kafka (attempt %d/%d): %v\n", i+1, max_retry, err)
-		// If it's the last time and it still fails, then handle it as usual
-		if i == max_retry-1 {
-			redis.Delete(registrationOtpKey)
-			return http.StatusInternalServerError, errors.New("failed to send OTP to Kafka after retries")
-		}
+		return http.StatusInternalServerError, fmt.Errorf("failed to send OTP to Kafka: %v", err)
 	}
 
 	return http.StatusOK, nil
@@ -322,32 +316,26 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 		},
 	}
 	// * Step 6
-	for i := 0; i < max_retry; i++ {
-		err = messagebroker.SendMessage(global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC, global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC, message)
-		if err == nil {
-			// Sent successfully, continue processing
-			bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
-			_ = redis.Save(forgotPasswordKey, map[string]interface{}{
-				"encrypted_email": bcryptEncryptedEmail,
-				"otp":             otp,
-			}, three_minutes)
+	err = messagebroker.SendMessage(
+		global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC,
+		arg.Email,
+		message)
+	if err == nil {
+		bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
+		_ = redis.Save(forgotPasswordKey, map[string]interface{}{
+			"encrypted_email": bcryptEncryptedEmail,
+			"otp":             otp,
+		}, three_minutes)
 
-			res.Count++
-			_ = redis.Save(attemptKey, res, three_hours)
+		res.Count++
+		_ = redis.Save(attemptKey, res, three_hours)
 
-			return http.StatusOK, nil
-		}
+		return http.StatusOK, nil
+	} else {
+		_ = redis.Delete(attemptKey)
 
-		log.Printf("failed to send OTP email (attempt %d/%d): %v\n", i+1, max_retry, err)
-
-		// If it's the last time and still an error, handle and return the error
-		if i == max_retry-1 {
-			_ = redis.Delete(attemptKey)
-			return http.StatusInternalServerError, fmt.Errorf("send mail failed after %d retries: %v", max_retry, err)
-		}
+		return http.StatusInternalServerError, fmt.Errorf("send mail failed: %v", err)
 	}
-
-	return http.StatusOK, nil
 }
 
 // VerifyForgotPasswordOtp implements services.IAuth.
