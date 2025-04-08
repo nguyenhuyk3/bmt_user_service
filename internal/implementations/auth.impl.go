@@ -92,7 +92,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 	}
 
 	for i := 0; i < max_retry; i++ {
-		err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL, global.REGISTRATION_OTP_EMAIL, message)
+		err = messagebroker.SendMessage(global.REGISTRATION_OTP_EMAIL_TOPIC, global.REGISTRATION_OTP_EMAIL_TOPIC, message)
 		if err == nil {
 			// Send successfully, break the loop
 			break
@@ -323,7 +323,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	}
 	// * Step 6
 	for i := 0; i < max_retry; i++ {
-		err = messagebroker.SendMessage(global.FORGOT_PASSWORD_OTP_EMAIL, global.FORGOT_PASSWORD_OTP_EMAIL, message)
+		err = messagebroker.SendMessage(global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC, global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC, message)
 		if err == nil {
 			// Sent successfully, continue processing
 			bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
