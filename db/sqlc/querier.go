@@ -16,6 +16,7 @@ type Querier interface {
 	GetInforByEmail(ctx context.Context, email pgtype.Text) (UserInfos, error)
 	GetUserByEmail(ctx context.Context, email string) (Accounts, error)
 	InsertAccount(ctx context.Context, arg InsertAccountParams) error
+	InsertOAuth2Action(ctx context.Context, email pgtype.Text) error
 	InsertUserAction(ctx context.Context, email pgtype.Text) error
 	InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) error
 	UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error)

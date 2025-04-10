@@ -44,7 +44,7 @@ func (s *SqlStore) execTran(ctx context.Context, fn func(*Queries) error) error 
 	return tran.Commit(ctx)
 }
 
-func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq) error {
+func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq, isFromOAuth2 bool) error {
 	err := s.execTran(ctx, func(q *Queries) error {
 		var role NullRoles
 		err := role.Scan(arg.Account.Role)
@@ -81,12 +81,22 @@ func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRe
 			return fmt.Errorf("failed to insert user info: %v", err)
 		}
 
-		err = q.InsertUserAction(ctx, pgtype.Text{
-			String: arg.Account.Email,
-			Valid:  true,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to insert user action: %v", err)
+		if !isFromOAuth2 {
+			err = q.InsertUserAction(ctx, pgtype.Text{
+				String: arg.Account.Email,
+				Valid:  true,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to insert user action: %v", err)
+			}
+		} else {
+			err = q.InsertOAuth2Action(ctx, pgtype.Text{
+				String: arg.Account.Email,
+				Valid:  true,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to insert oauth2 user action: %v", err)
+			}
 		}
 
 		return nil

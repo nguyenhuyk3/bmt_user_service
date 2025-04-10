@@ -21,11 +21,13 @@ import (
 	"user_service/utils/token/jwt"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"golang.org/x/oauth2"
 )
 
 type authService struct {
-	SqlStore *sqlc.SqlStore
-	JwtMaker jwt.IMaker
+	SqlStore           *sqlc.SqlStore
+	JwtMaker           jwt.IMaker
+	OAuth2GoogleConfig *oauth2.Config
 }
 
 func NewAuthService(sqlStore *sqlc.SqlStore, jwtMaker jwt.IMaker) services.IAuth {
@@ -39,8 +41,6 @@ const (
 	ten_minutes   = 10
 	three_minutes = 3
 	three_hours   = 3 * 60
-
-	max_retry = 3
 )
 
 /*
@@ -146,7 +146,7 @@ func (a *authService) CompleteRegistration(ctx context.Context, arg request.Comp
 		return http.StatusBadRequest, errors.New("encrypted email and email don't match")
 	}
 
-	err = a.SqlStore.InsertAccountTran(ctx, arg)
+	err = a.SqlStore.InsertAccountTran(ctx, arg, false)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to complete registration: %w", err)
 	}
@@ -201,7 +201,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	go func() {
 		defer wg.Done()
 
-		token, payload, err := a.JwtMaker.CreateRefreshToken(user.Email, string(user.Role.Roles))
+		token, _, err := a.JwtMaker.CreateRefreshToken(user.Email, string(user.Role.Roles))
 
 		mu.Lock()
 
@@ -212,7 +212,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 		}
 
 		result.RefreshToken = token
-		result.RefreshPayload = payload
+		// result.RefreshPayload = payload
 	}()
 
 	wg.Add(1)
@@ -248,14 +248,14 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 }
 
 /*
-SendForgotPasswordOtp will include 6 steps:
-	- Step 1: Check if the email exists before
-	- Step 2: Check if this email is locked (check blockKey) or not (avoid spam)
-	- Step 3: Check how many times this email has been sent, if more than 2 times, a key (blockKey) will be created in redis (within 3 hours)
-	- Step 4: Check if the email has an expired otp code or not (check forgotPasswordKey), because each email will exist for 3 minutes and after 3 minutes it can only be sent once more
-	- Step 5: If it passes the above conditions, the email will be sent
-	- Step 6: If the email is sent successfully, we will increase the attempKey by 1
-*/
+* SendForgotPasswordOtp will include 6 steps:
+*	- Step 1: Check if the email exists before
+*	- Step 2: Check if this email is locked (check blockKey) or not (avoid spam)
+*	- Step 3: Check how many times this email has been sent, if more than 2 times, a key (blockKey) will be created in redis (within 3 hours)
+*	- Step 4: Check if the email has an expired otp code or not (check forgotPasswordKey), because each email will exist for 3 minutes and after 3 minutes it can only be sent once more
+*	- Step 5: If it passes the above conditions, the email will be sent
+*	- Step 6: If the email is sent successfully, we will increase the attempKey by 1
+ */
 // SendForgotPasswordOtp implements services.IAuth.
 func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
 	// * Step 1
@@ -415,4 +415,57 @@ func (a *authService) Logout(ctx context.Context, email string) (int, error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+// InsertGoogleUser implements services.IAuth.
+func (a *authService) InsertGoogleUser(ctx context.Context, arg response.GoogleUserInfo) (int, error) {
+	hasedPassword, _ := cryptor.BcryptHashInput(arg.Id)
+	err := a.SqlStore.InsertAccountTran(ctx, request.CompleteRegistrationReq{
+		Account: request.Account{
+			Email:    arg.Email,
+			Password: hasedPassword,
+			Role:     global.CUSTOMER_ROLE,
+		},
+		Info: request.Info{
+			Name:     arg.Name,
+			Sex:      global.MALE,
+			BirthDay: "",
+		},
+	}, true)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("an error occur when insert to db: %v", err)
+	}
+
+	return http.StatusOK, nil
+}
+
+// CheckGoogleUserByEmail implements services.IAuth.
+func (a *authService) CheckGoogleUserByEmail(ctx context.Context, email string) (bool, error) {
+	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, email)
+	if err != nil {
+		return false, fmt.Errorf("an error occur when querying to db: %v", err)
+	}
+	if isExists {
+		return isExists, fmt.Errorf("this email has been registered")
+	} else {
+		return isExists, nil
+	}
+}
+
+// ReturnToken implements services.IAuth.
+func (a *authService) ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error) {
+	accessToken, payload, err := a.JwtMaker.CreateAccessToken(email, global.CUSTOMER_ROLE)
+	if err != nil {
+		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("an error occur when creating jwt access token: %v", err)
+	}
+	refreshToken, _, err := a.JwtMaker.CreateRefreshToken(email, global.CUSTOMER_ROLE)
+	if err != nil {
+		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("an error occur when creating jwt refrest token: %v", err)
+	}
+
+	return response.LoginRes{
+		AccessToken:   accessToken,
+		AccessPayload: payload,
+		RefreshToken:  refreshToken,
+	}, http.StatusOK, nil
 }

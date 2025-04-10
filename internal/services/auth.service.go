@@ -26,9 +26,16 @@ type ILogout interface {
 	Logout(ctx context.Context, email string) (int, error)
 }
 
+type IGoogleLogin interface {
+	CheckGoogleUserByEmail(ctx context.Context, email string) (bool, error)
+	InsertGoogleUser(ctx context.Context, arg response.GoogleUserInfo) (int, error)
+	ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error)
+}
+
 type IAuth interface {
 	IRegistration
 	ILogin
+	IGoogleLogin
 	IForgotPassword
 	ILogout
 }

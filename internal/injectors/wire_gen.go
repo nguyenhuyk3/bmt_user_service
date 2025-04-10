@@ -26,7 +26,8 @@ func InitAuthController() (*controllers.AuthController, error) {
 		return nil, err
 	}
 	iAuth := implementations.NewAuthService(sqlStore, iMaker)
-	authController := controllers.NewAuthController(iAuth)
+	config := provider.ProviderGoogleOAuthConfig()
+	authController := controllers.NewAuthController(iAuth, config)
 	return authController, nil
 }
 

@@ -54,6 +54,16 @@ func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) er
 	return err
 }
 
+const insertOAuth2Action = `-- name: InsertOAuth2Action :exec
+INSERT INTO "user_actions" ("email", "created_at", "updated_at", "login_at", "logout_at")
+VALUES ($1, NOW(), NOW(), NOW(), NULL)
+`
+
+func (q *Queries) InsertOAuth2Action(ctx context.Context, email pgtype.Text) error {
+	_, err := q.db.Exec(ctx, insertOAuth2Action, email)
+	return err
+}
+
 const insertUserAction = `-- name: InsertUserAction :exec
 INSERT INTO "user_actions" ("email", "created_at", "updated_at", "login_at", "logout_at")
 VALUES ($1, NOW(), NOW(), NULL, NULL)

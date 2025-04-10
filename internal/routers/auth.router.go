@@ -26,6 +26,10 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup, authMiddleware *mi
 		}
 
 		authRouterPublic.POST("/login", authController.Login)
+
+		authRouterPublic.GET("/oauth2/google_login", authController.GoogleLogin)
+		authRouterPublic.GET("/oauth2/google/callback", authController.GoogleCallback)
+
 		authRouterPublic.POST("/logout",
 			authMiddleware.GetAccessToken(),
 			authMiddleware.GetRefreshToken(),

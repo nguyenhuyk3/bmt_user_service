@@ -10,15 +10,8 @@ type serviceSetting struct {
 	MailSetting  mailSetting    `mapstructure:"mail"`
 	RedisSetting redisSetting   `mapstructure:"redis"`
 	KafkaSetting kafkaSetting   `mapstructure:"kafka"`
+	GoogleOAuth2 googleOAuth2   `mapstructure:"google_oauth_2"`
 }
-
-// type BasicSetting struct {
-// 	Host     string `mapstructure:"host"`
-// 	Port     int    `mapstructure:"port"`
-// 	Username string `mapstructure:"username,omitempty"`
-// 	Password string `mapstructure:"password,omitempty"`
-// 	Database int    `mapstructure:"database,omitempty"`
-// }
 
 type serverSetting struct {
 	ServerPort   string `mapstructure:"SERVER_PORT"`
@@ -59,4 +52,10 @@ type kafkaSetting struct {
 	KafkaBroker_1 string `mapstructure:"kafka_broker_1"`
 	KafkaBroker_2 string `mapstructure:"kafka_broker_2"`
 	KafkaBroker_3 string `mapstructure:"kafka_broker_3"`
+}
+
+type googleOAuth2 struct {
+	RedirectUrl  string `mapstructure:"redirect_url"`
+	ClientId     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_sercet"`
 }

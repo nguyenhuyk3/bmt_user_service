@@ -15,4 +15,4 @@ sqlc:
 wire:
 	wire ./internal/injectors/
 
-.PHONY: run	migrateup migratedown slqc wire
+.PHONY: run	migrate_up migrate_down slqc wire

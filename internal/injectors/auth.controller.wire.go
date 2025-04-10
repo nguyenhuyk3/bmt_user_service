@@ -19,6 +19,7 @@ func InitAuthController() (*controllers.AuthController, error) {
 		provider.ProvideSecretKey,
 		jwt.NewJWTMaker,
 		implementations.NewAuthService,
+		provider.ProviderGoogleOAuthConfig,
 		controllers.NewAuthController,
 	)
 

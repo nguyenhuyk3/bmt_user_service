@@ -21,8 +21,8 @@ type payload struct {
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
 	IssuedAt  time.Time `json:"issued_at"`
-	ExpiredAt time.Time `json:"expired_at"`
 	Issued    int64     `json:"issued"`
+	ExpiredAt time.Time `json:"expired_at"`
 	Exp       int64     `json:"exp"`
 }
 
