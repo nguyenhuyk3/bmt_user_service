@@ -3,3 +3,4 @@ app.env
 local.yaml
 
 /scripts
+/storages

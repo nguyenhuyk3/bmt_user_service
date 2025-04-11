@@ -6,11 +6,12 @@ type Config struct {
 }
 
 type serviceSetting struct {
-	PostgreSql   postgreSetting `mapstructure:"database"`
-	MailSetting  mailSetting    `mapstructure:"mail"`
-	RedisSetting redisSetting   `mapstructure:"redis"`
-	KafkaSetting kafkaSetting   `mapstructure:"kafka"`
-	GoogleOAuth2 googleOAuth2   `mapstructure:"google_oauth_2"`
+	PostgreSql    postgreSetting `mapstructure:"database"`
+	MailSetting   mailSetting    `mapstructure:"mail"`
+	RedisSetting  redisSetting   `mapstructure:"redis"`
+	KafkaSetting  kafkaSetting   `mapstructure:"kafka"`
+	GoogleOAuth2  googleOAuth2   `mapstructure:"google_oauth_2"`
+	LoggerSetting LoggerSetting  `mapstructure:"zap_log"`
 }
 
 type serverSetting struct {
@@ -58,4 +59,13 @@ type googleOAuth2 struct {
 	RedirectUrl  string `mapstructure:"redirect_url"`
 	ClientId     string `mapstructure:"client_id"`
 	ClientSecret string `mapstructure:"client_sercet"`
+}
+
+type LoggerSetting struct {
+	LogLevel    string `mapstructure:"log_level"` // examples: "debug", "info", "warn", "error"
+	FileLogName string `mapstructure:"file_log_name"`
+	MaxBackups  int    `mapstructure:"max_backups"`
+	MaxAge      int    `mapstructure:"max_age"` // number of days to keep log
+	MaxSize     int    `mapstructure:"max_size"`
+	Compress    bool   `mapstructure:"compress"` // compress old logs
 }

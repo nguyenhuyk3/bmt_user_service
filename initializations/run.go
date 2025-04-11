@@ -7,9 +7,9 @@ import (
 
 func Run() {
 	loadConfigs()
+	initLogger()
 	initRedis()
 	initPostgreSql()
-	initSqlc()
 
 	r := initRouter()
 

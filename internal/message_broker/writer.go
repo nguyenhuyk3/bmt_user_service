@@ -3,12 +3,14 @@ package messagebroker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"sync"
 	"time"
 	"user_service/global"
 
 	"github.com/segmentio/kafka-go"
+	"go.uber.org/zap"
 )
 
 var (
@@ -80,7 +82,7 @@ func SendMessage(topic string, key string, value interface{}) error {
 	}
 
 	if err := ensureTopicExists(topic); err != nil {
-		log.Printf("failed to ensure topic exists: %v", err)
+		global.Logger.Error("failed to ensure topic exists", zap.Any("err", err))
 		return err
 	}
 
@@ -96,11 +98,12 @@ func SendMessage(topic string, key string, value interface{}) error {
 	})
 
 	if err != nil {
-		log.Printf("failed to send message to Kafka: %v", err)
+		global.Logger.Error("failed to send message to Kafka", zap.Any("err", err))
 		return err
 	}
 
-	// log.Printf("message sent to Kafka topic %s", topic)
+	global.Logger.Error(fmt.Sprintf("message sent to Kafka topic %s", topic))
+
 	return nil
 }
 
