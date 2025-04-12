@@ -16,7 +16,7 @@ func ProvideSecretKey() string {
 	return global.Config.Server.SercetKey
 }
 
-func ProviderGoogleOAuthConfig() *oauth2.Config {
+func ProvideGoogleOAuthConfig() *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     global.Config.ServiceSetting.GoogleOAuth2.ClientId,
 		ClientSecret: global.Config.ServiceSetting.GoogleOAuth2.ClientSecret,

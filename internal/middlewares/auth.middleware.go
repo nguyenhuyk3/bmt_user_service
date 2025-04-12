@@ -8,7 +8,7 @@ import (
 	"user_service/dto/request"
 	"user_service/global"
 	"user_service/internal/responses"
-	"user_service/utils/redis"
+	"user_service/internal/services"
 	"user_service/utils/token/jwt"
 
 	"github.com/gin-gonic/gin"
@@ -22,12 +22,14 @@ const (
 )
 
 type AuthMiddleware struct {
-	JwtMaker jwt.IMaker
+	JwtMaker    jwt.IMaker
+	RedisClient services.IRedis
 }
 
-func NewAuthMiddleware(jwtMake jwt.IMaker) *AuthMiddleware {
+func NewAuthMiddleware(jwtMake jwt.IMaker, redisClient services.IRedis) *AuthMiddleware {
 	return &AuthMiddleware{
-		JwtMaker: jwtMake,
+		JwtMaker:    jwtMake,
+		RedisClient: redisClient,
 	}
 }
 
@@ -40,7 +42,7 @@ func (am *AuthMiddleware) CheckAccessTokenInBlackList() gin.HandlerFunc {
 			return
 		}
 
-		isExists := redis.ExistsKey(fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, accessToken))
+		isExists := am.RedisClient.ExistsKey(fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, accessToken))
 		if isExists {
 			responses.FailureResponse(c, http.StatusUnauthorized, "access token is expired")
 			c.Abort()
@@ -60,7 +62,7 @@ func (am *AuthMiddleware) CheckRefreshTokenInBlackList() gin.HandlerFunc {
 			return
 		}
 
-		isExists := redis.ExistsKey(fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, refreshToken))
+		isExists := am.RedisClient.ExistsKey(fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, refreshToken))
 		if isExists {
 			responses.FailureResponse(c, http.StatusUnauthorized, "refresh token is expired")
 			c.Abort()
@@ -177,14 +179,14 @@ func (am *AuthMiddleware) DestroyToken() gin.HandlerFunc {
 		ttl := time.Until(accessClaims.ExpiredAt)
 		if ttl > 0 {
 			key := fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, accessToken)
-			_ = redis.Save(key, "revoked", int64(ttl.Minutes()))
+			_ = am.RedisClient.Save(key, "revoked", int64(ttl.Minutes()))
 		}
 
 		refreshClaims, _ := am.JwtMaker.VerifyRefreshToken(refreshToken)
 		ttl = time.Until(refreshClaims.ExpiredAt)
 		if ttl > 0 {
 			key := fmt.Sprintf("%s%s", global.REDIS_BLACK_LIST, refreshToken)
-			_ = redis.Save(key, "revoked", int64(ttl.Minutes()))
+			_ = am.RedisClient.Save(key, "revoked", int64(ttl.Minutes()))
 		}
 
 		c.Set("email", accessClaims.Email)

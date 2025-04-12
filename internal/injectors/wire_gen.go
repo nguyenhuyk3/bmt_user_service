@@ -11,7 +11,9 @@ import (
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
 	"user_service/internal/injectors/provider"
+	"user_service/internal/message_broker"
 	"user_service/internal/middlewares"
+	"user_service/utils/redis"
 	"user_service/utils/token/jwt"
 )
 
@@ -25,8 +27,10 @@ func InitAuthController() (*controllers.AuthController, error) {
 	if err != nil {
 		return nil, err
 	}
-	iAuth := implementations.NewAuthService(sqlStore, iMaker)
-	config := provider.ProviderGoogleOAuthConfig()
+	iRedis := redis.NewRedisClient()
+	iMessageBroker := messagebroker.NewKafkaMessageBroker()
+	iAuth := implementations.NewAuthService(sqlStore, iMaker, iRedis, iMessageBroker)
+	config := provider.ProvideGoogleOAuthConfig()
 	authController := controllers.NewAuthController(iAuth, config)
 	return authController, nil
 }
@@ -39,7 +43,8 @@ func InitAuthMiddleware() (*middlewares.AuthMiddleware, error) {
 	if err != nil {
 		return nil, err
 	}
-	authMiddleware := middlewares.NewAuthMiddleware(iMaker)
+	iRedis := redis.NewRedisClient()
+	authMiddleware := middlewares.NewAuthMiddleware(iMaker, iRedis)
 	return authMiddleware, nil
 }
 

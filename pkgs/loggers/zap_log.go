@@ -49,11 +49,11 @@ func NewLogger(config settings.LoggerSetting) *LoggerZap {
 	}
 	core := zapcore.NewCore(
 		encoder,
-		zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook)),
+		zapcore.AddSync(&hook),
 		level,
 	)
 
-	return &LoggerZap{zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))}
+	return &LoggerZap{zap.New(core, zap.AddCaller())}
 }
 
 // format logs a message

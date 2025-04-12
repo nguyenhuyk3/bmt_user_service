@@ -13,27 +13,31 @@ import (
 	"user_service/dto/request"
 	"user_service/dto/response"
 	"user_service/global"
-	messagebroker "user_service/internal/message_broker"
 	"user_service/internal/services"
 	"user_service/utils/cryptor"
 	"user_service/utils/generator"
-	"user_service/utils/redis"
 	"user_service/utils/token/jwt"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"golang.org/x/oauth2"
 )
 
 type authService struct {
-	SqlStore           *sqlc.SqlStore
-	JwtMaker           jwt.IMaker
-	OAuth2GoogleConfig *oauth2.Config
+	SqlStore      *sqlc.SqlStore
+	JwtMaker      jwt.IMaker
+	RedisClient   services.IRedis
+	MessageBroker services.IMessageBroker
 }
 
-func NewAuthService(sqlStore *sqlc.SqlStore, jwtMaker jwt.IMaker) services.IAuth {
+func NewAuthService(
+	sqlStore *sqlc.SqlStore,
+	jwtMaker jwt.IMaker,
+	redisClient services.IRedis,
+	messageBroker services.IMessageBroker) services.IAuth {
 	return &authService{
-		SqlStore: sqlStore,
-		JwtMaker: jwtMaker,
+		SqlStore:      sqlStore,
+		JwtMaker:      jwtMaker,
+		RedisClient:   redisClient,
+		MessageBroker: messageBroker,
 	}
 }
 
@@ -56,13 +60,13 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 	encryptedAesEmail, _ := cryptor.AesEncrypt(arg.Email)
 	registrationOtpKey := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedAesEmail)
 
-	isExists := redis.ExistsKey(registrationOtpKey)
+	isExists := a.RedisClient.ExistsKey(registrationOtpKey)
 	if isExists {
 		return http.StatusConflict, errors.New("email is in registration status")
 	}
 	// * Step 2
 	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
-	isExists = redis.ExistsKey(completeRegistrationProcessKey)
+	isExists = a.RedisClient.ExistsKey(completeRegistrationProcessKey)
 	if isExists {
 		return http.StatusConflict, errors.New("email is in complete registration process")
 	}
@@ -78,7 +82,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 	encryptedBcryptEmail, _ := cryptor.BcryptHashInput(arg.Email)
 	// Save email and otp is in registration status
-	_ = redis.Save(registrationOtpKey, verifyOtp{
+	_ = a.RedisClient.Save(registrationOtpKey, verifyOtp{
 		EncryptedEmail: encryptedBcryptEmail,
 		Otp:            otp,
 	}, ten_minutes)
@@ -90,12 +94,12 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 		},
 	}
 
-	err = messagebroker.SendMessage(
+	err = a.MessageBroker.SendMessage(
 		global.REGISTRATION_OTP_EMAIL_TOPIC,
 		arg.Email,
 		message)
 	if err != nil {
-		redis.Delete(registrationOtpKey)
+		a.RedisClient.Delete(registrationOtpKey)
 
 		return http.StatusInternalServerError, fmt.Errorf("failed to send OTP to Kafka: %v", err)
 	}
@@ -110,15 +114,15 @@ func (a *authService) VerifyRegistrationOtp(ctx context.Context, arg request.Ver
 
 	var result verifyOtp
 
-	err := redis.Get(key, &result)
+	err := a.RedisClient.Get(key, &result)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("otp has expired: %v", err)
 	}
 
 	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Email)
 	if isMatch == nil && arg.Otp == result.Otp {
-		_ = redis.Delete(key)
-		_ = redis.Save(fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedEmail),
+		_ = a.RedisClient.Delete(key)
+		_ = a.RedisClient.Save(fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedEmail),
 			map[string]interface{}{
 				"encrypted_email": result.EncryptedEmail,
 			}, ten_minutes)
@@ -136,7 +140,7 @@ func (a *authService) CompleteRegistration(ctx context.Context, arg request.Comp
 
 	var result verifyOtp
 
-	err := redis.Get(key, &result)
+	err := a.RedisClient.Get(key, &result)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("email is not in complete registration process %v", err)
 	}
@@ -151,7 +155,7 @@ func (a *authService) CompleteRegistration(ctx context.Context, arg request.Comp
 		return http.StatusInternalServerError, fmt.Errorf("failed to complete registration: %w", err)
 	}
 
-	_ = redis.Delete(key)
+	_ = a.RedisClient.Delete(key)
 
 	return http.StatusCreated, nil
 }
@@ -274,27 +278,27 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail)
 	// Check if this key has been blocked due to exceeding 3 email attempts
 	blockKey := fmt.Sprintf("%s%s", global.BLOCK_FORGOT_PASSWORD_KEY, aesEncryptedEmail)
-	blockedTTL, err := redis.GetTTL(blockKey)
+	blockedTTL, err := a.RedisClient.GetTTL(blockKey)
 	if err == nil && blockedTTL > 0 {
-		_ = redis.Delete(attemptKey)
+		_ = a.RedisClient.Delete(attemptKey)
 		return http.StatusTooManyRequests, fmt.Errorf("you cannot make a request in: %v", blockedTTL)
 	}
 
 	// * Step 3
 	var res blockSendForgotPasswordOtp
 
-	err = redis.Get(attemptKey, &res)
+	err = a.RedisClient.Get(attemptKey, &res)
 	if err != nil {
 		// This code will be perform at first
 		res.Count = 0
-		_ = redis.Save(attemptKey, res, three_hours)
+		_ = a.RedisClient.Save(attemptKey, res, three_hours)
 	}
 
 	if res.Count > 2 {
-		_ = redis.Save(blockKey, map[string]interface{}{
+		_ = a.RedisClient.Save(blockKey, map[string]interface{}{
 			"blocked": true,
 		}, three_hours)
-		_ = redis.Delete(attemptKey)
+		_ = a.RedisClient.Delete(attemptKey)
 
 		return http.StatusTooManyRequests, errors.New("you can't do the request in 3 hours")
 	}
@@ -302,7 +306,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	// This key will hold the value of the otp code
 	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, aesEncryptedEmail)
 	// Check remaining time of this key
-	remainingTime, _ := redis.GetTTL(forgotPasswordKey)
+	remainingTime, _ := a.RedisClient.GetTTL(forgotPasswordKey)
 	if remainingTime > 0 {
 		return http.StatusTooManyRequests, fmt.Errorf("please try again later %v", remainingTime)
 	}
@@ -316,23 +320,23 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 		},
 	}
 	// * Step 6
-	err = messagebroker.SendMessage(
+	err = a.MessageBroker.SendMessage(
 		global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC,
 		arg.Email,
 		message)
 	if err == nil {
 		bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(arg.Email)
-		_ = redis.Save(forgotPasswordKey, map[string]interface{}{
+		_ = a.RedisClient.Save(forgotPasswordKey, map[string]interface{}{
 			"encrypted_email": bcryptEncryptedEmail,
 			"otp":             otp,
 		}, three_minutes)
 
 		res.Count++
-		_ = redis.Save(attemptKey, res, three_hours)
+		_ = a.RedisClient.Save(attemptKey, res, three_hours)
 
 		return http.StatusOK, nil
 	} else {
-		_ = redis.Delete(attemptKey)
+		_ = a.RedisClient.Delete(attemptKey)
 
 		return http.StatusInternalServerError, fmt.Errorf("send mail failed: %v", err)
 	}
@@ -344,15 +348,15 @@ func (a *authService) VerifyForgotPasswordOtp(ctx context.Context, arg request.V
 	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, aesEncryptedEmail)
 
 	var result verifyOtp
-	err := redis.Get(forgotPasswordKey, &result)
+	err := a.RedisClient.Get(forgotPasswordKey, &result)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
 	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Email)
 	if isMatch == nil && arg.Otp == result.Otp {
-		_ = redis.Delete(forgotPasswordKey)
-		_ = redis.Save(fmt.Sprintf("%s%s", global.COMPLETE_FORGOT_PASSWORD_PROCESS, aesEncryptedEmail),
+		_ = a.RedisClient.Delete(forgotPasswordKey)
+		_ = a.RedisClient.Save(fmt.Sprintf("%s%s", global.COMPLETE_FORGOT_PASSWORD_PROCESS, aesEncryptedEmail),
 			map[string]interface{}{
 				"encrypted_email": result.EncryptedEmail,
 			}, ten_minutes)
@@ -367,13 +371,13 @@ func (a *authService) VerifyForgotPasswordOtp(ctx context.Context, arg request.V
 func (a *authService) CompleteForgotPassword(ctx context.Context, arg request.CompleteForgotPasswordReq) (int, error) {
 	aesEncryptedEmail, _ := cryptor.AesEncrypt(arg.Email)
 	key := fmt.Sprintf("%s%s", global.COMPLETE_FORGOT_PASSWORD_PROCESS, aesEncryptedEmail)
-	isExists := redis.ExistsKey(key)
+	isExists := a.RedisClient.ExistsKey(key)
 	if !isExists {
 		return http.StatusConflict, errors.New("invalid request for complete forgot password")
 	}
 
 	var result verifyOtp
-	err := redis.Get(key, &result)
+	err := a.RedisClient.Get(key, &result)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
@@ -392,8 +396,8 @@ func (a *authService) CompleteForgotPassword(ctx context.Context, arg request.Co
 		return http.StatusInternalServerError, err
 	}
 
-	_ = redis.Delete(fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail))
-	_ = redis.Delete(key)
+	_ = a.RedisClient.Delete(fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail))
+	_ = a.RedisClient.Delete(key)
 
 	return http.StatusOK, nil
 }
