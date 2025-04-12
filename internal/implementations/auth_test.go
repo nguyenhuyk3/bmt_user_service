@@ -21,8 +21,10 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func newTestAuthService(t *testing.T, sqlStore sqlc.IStore,
-	redisClient services.IRedis, messageBroker services.IMessageBroker) services.IAuth {
+func newTestAuthService(t *testing.T,
+	sqlStore sqlc.IStore,
+	redisClient services.IRedis,
+	messageBroker services.IMessageBroker) services.IAuth {
 	fortests.LoadConfigsForTests()
 	sercetKey, err := generator.GenerateStringNumberBasedOnLength(32)
 	require.NoError(t, err)
@@ -56,7 +58,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 		expectErr      bool
 	}{
 		{
-			name: "email is in registration status",
+			name: "Should return 409 when email is already in registration status",
 			setUp: func() {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(true)
 			},
@@ -64,7 +66,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name: "email is in complete registration process",
+			name: "Should return 409 when other person send registration otp request for the same mail",
 			setUp: func() {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(true)
@@ -73,7 +75,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name: "failed to check email existence in database",
+			name: "Should return 500 when database email check fails",
 			setUp: func() {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
@@ -85,7 +87,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name: "email already exists",
+			name: "Should return 409 when email already exists in database",
 			setUp: func() {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
@@ -97,7 +99,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name: "failed to send OTP to Kafka",
+			name: "Should return 500 when OTP message sending to Kafka fails",
 			setUp: func() {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
@@ -116,7 +118,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 			expectErr:      true,
 		},
 		{
-			name: "Success case",
+			name: "Success case and return 200",
 			setUp: func() {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
@@ -142,6 +144,245 @@ func TestSendRegistrationOtp(t *testing.T) {
 			status, err := authService.SendRegistrationOtp(context.TODO(), request.SendOtpReq{
 				Email: email,
 			})
+
+			assert.Equal(t, tc.expectedStatus, status)
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestVerifyRegistrationOtp(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSqlStore := mocks.NewMockIStore(ctrl)
+	mockRedis := mocks.NewMockIRedis(ctrl)
+	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	authService := newTestAuthService(t, mockSqlStore, mockRedis, mockBroker)
+
+	email := "test@example.com"
+
+	otp, err := generator.GenerateStringNumberBasedOnLength(6)
+	require.NoError(t, err)
+
+	encryptedAesEmail, err := cryptor.AesEncrypt(email)
+	require.NoError(t, err)
+
+	encryptedBcryptEmail, err := cryptor.BcryptHashInput(email)
+	require.NoError(t, err)
+
+	registrationOtpKey := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedAesEmail)
+	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
+	// Define verifyOtp struct that matches the one in the implementation
+	verifyOtpData := verifyOtp{
+		EncryptedEmail: encryptedBcryptEmail,
+		Otp:            otp,
+	}
+
+	testCases := []struct {
+		name           string
+		setUp          func()
+		expectedStatus int
+		expectErr      bool
+	}{
+		{
+			name: "OTP has expired or not found",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(registrationOtpKey, gomock.Any()).
+					// This won't actually set anything since we return an error
+					SetArg(1, verifyOtpData).
+					Return(errors.New("key not found"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "Invalid OTP",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(registrationOtpKey, gomock.Any()).
+					SetArg(1, verifyOtp{
+						EncryptedEmail: encryptedBcryptEmail,
+						Otp:            "wrong-otp",
+					}).
+					Return(nil)
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectErr:      true,
+		},
+		{
+			name: "Invalid email",
+			setUp: func() {
+				// Create a different bcrypt hash for a different email
+				wrongEmailHash, err := cryptor.BcryptHashInput("wrong-email@gmail.com")
+				require.NoError(t, err)
+
+				mockRedis.EXPECT().
+					Get(registrationOtpKey, gomock.Any()).
+					SetArg(1, verifyOtp{
+						EncryptedEmail: wrongEmailHash,
+						Otp:            otp,
+					}).
+					Return(nil)
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectErr:      true,
+		},
+		{
+			name: "Success case",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(registrationOtpKey, gomock.Any()).
+					SetArg(1, verifyOtpData).
+					Return(nil)
+				mockRedis.EXPECT().
+					Delete(registrationOtpKey).
+					Return(nil)
+				mockRedis.EXPECT().
+					Save(completeRegistrationProcessKey,
+						gomock.Any(), int64(ten_minutes)).
+					Return(nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectErr:      false,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setUp()
+
+			status, err := authService.VerifyRegistrationOtp(context.TODO(), request.VerifyOtpReq{
+				Email: email,
+				Otp:   otp,
+			})
+
+			assert.Equal(t, tc.expectedStatus, status)
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCompleteRegistration(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSqlStore := mocks.NewMockIStore(ctrl)
+	mockRedis := mocks.NewMockIRedis(ctrl)
+	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	authService := newTestAuthService(t, mockSqlStore, mockRedis, mockBroker)
+
+	email := "test@example.com"
+
+	otp, err := generator.GenerateStringNumberBasedOnLength(6)
+	require.NoError(t, err)
+
+	encryptedAesEmail, err := cryptor.AesEncrypt(email)
+	require.NoError(t, err)
+	// Encrypt email with bcrypt for testing
+	encryptedBcryptEmail, err := cryptor.BcryptHashInput(email)
+	require.NoError(t, err)
+
+	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
+	// Sample registration request
+	registrationReq := request.CompleteRegistrationReq{
+		Account: request.Account{
+			Email:    email,
+			Password: "anhiuemlove33",
+			Role:     "customer",
+		},
+	}
+	// Data stored in Redis
+	verifyOtpData := verifyOtp{
+		EncryptedEmail: encryptedBcryptEmail,
+		Otp:            otp,
+	}
+
+	testCases := []struct {
+		name           string
+		setUp          func()
+		expectedStatus int
+		expectErr      bool
+	}{
+		{
+			name: "Email not in complete registration process",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(completeRegistrationProcessKey, gomock.Any()).
+					Return(errors.New("key not found"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "Encrypted email and email don't match",
+			setUp: func() {
+				// Create a different bcrypt hash for a different email
+				wrongEmailHash, err := cryptor.BcryptHashInput("wrong-email@gmail.com")
+				require.NoError(t, err)
+
+				mockRedis.EXPECT().
+					Get(completeRegistrationProcessKey, gomock.Any()).
+					SetArg(1, verifyOtp{
+						EncryptedEmail: wrongEmailHash,
+						Otp:            otp,
+					}).
+					Return(nil)
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectErr:      true,
+		},
+		{
+			name: "Failed to insert account",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(completeRegistrationProcessKey, gomock.Any()).
+					SetArg(1, verifyOtpData).
+					Return(nil)
+				mockSqlStore.EXPECT().
+					InsertAccountTran(gomock.Any(), gomock.Eq(registrationReq), false).
+					Return(errors.New("database error"))
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "Success case",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(completeRegistrationProcessKey, gomock.Any()).
+					SetArg(1, verifyOtpData).
+					Return(nil)
+				mockSqlStore.EXPECT().
+					InsertAccountTran(gomock.Any(), gomock.Eq(registrationReq), false).
+					Return(nil)
+				mockRedis.EXPECT().
+					Delete(completeRegistrationProcessKey).
+					Return(nil)
+			},
+			expectedStatus: http.StatusCreated,
+			expectErr:      false,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setUp()
+
+			status, err := authService.CompleteRegistration(context.TODO(), registrationReq)
 
 			assert.Equal(t, tc.expectedStatus, status)
 			if tc.expectErr {
