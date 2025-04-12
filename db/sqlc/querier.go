@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+
 type Querier interface {
 	CheckAccountExistsByEmail(ctx context.Context, email string) (bool, error)
 	GetInforByEmail(ctx context.Context, email pgtype.Text) (UserInfos, error)

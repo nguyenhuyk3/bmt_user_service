@@ -21,7 +21,7 @@ import (
 
 func InitAuthController() (*controllers.AuthController, error) {
 	pool := provider.ProvidePgxPool()
-	sqlStore := sqlc.NewStore(pool)
+	iStore := sqlc.NewStore(pool)
 	string2 := provider.ProvideSecretKey()
 	iMaker, err := jwt.NewJWTMaker(string2)
 	if err != nil {
@@ -29,7 +29,7 @@ func InitAuthController() (*controllers.AuthController, error) {
 	}
 	iRedis := redis.NewRedisClient()
 	iMessageBroker := messagebroker.NewKafkaMessageBroker()
-	iAuth := implementations.NewAuthService(sqlStore, iMaker, iRedis, iMessageBroker)
+	iAuth := implementations.NewAuthService(iStore, iMaker, iRedis, iMessageBroker)
 	config := provider.ProvideGoogleOAuthConfig()
 	authController := controllers.NewAuthController(iAuth, config)
 	return authController, nil
@@ -52,8 +52,8 @@ func InitAuthMiddleware() (*middlewares.AuthMiddleware, error) {
 
 func InitCustomerController() (*controllers.CustomerController, error) {
 	pool := provider.ProvidePgxPool()
-	sqlStore := sqlc.NewStore(pool)
-	iCustomer := implementations.NewCustomerService(sqlStore)
+	iStore := sqlc.NewStore(pool)
+	iCustomer := implementations.NewCustomerService(iStore)
 	customerController := controllers.NewCustomerController(iCustomer)
 	return customerController, nil
 }

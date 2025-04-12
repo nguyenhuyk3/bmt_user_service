@@ -1,6 +1,13 @@
 package sqlc
 
-// type Store interface {
-// 	Querier
-// 	InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq) error
-// }
+import (
+	"context"
+	"user_service/dto/request"
+)
+
+//go:generate mockgen -source=store.interface.go -destination=../../internal/mocks/store.mock.go -package=mocks
+
+type IStore interface {
+	Querier
+	InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq, isFromOAuth2 bool) error
+}

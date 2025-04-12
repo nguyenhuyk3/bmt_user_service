@@ -13,10 +13,10 @@ import (
 )
 
 type customerService struct {
-	SqlStore *sqlc.SqlStore
+	SqlStore sqlc.IStore
 }
 
-func NewCustomerService(sqlStore *sqlc.SqlStore) services.ICustomer {
+func NewCustomerService(sqlStore sqlc.IStore) services.ICustomer {
 	return &customerService{
 		SqlStore: sqlStore,
 	}
@@ -24,7 +24,7 @@ func NewCustomerService(sqlStore *sqlc.SqlStore) services.ICustomer {
 
 // GetInfor implements services.ICustomer.
 func (c *customerService) GetInfor(ctx context.Context, arg request.GetInforReq) (response.GetInfoRes, int, error) {
-	infor, err := c.SqlStore.Queries.GetInforByEmail(ctx, pgtype.Text{
+	infor, err := c.SqlStore.GetInforByEmail(ctx, pgtype.Text{
 		String: arg.Email,
 		Valid:  true,
 	})

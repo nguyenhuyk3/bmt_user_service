@@ -6,7 +6,7 @@ import (
 	"user_service/dto/response"
 )
 
-//go:generate mockgen -source=auth.go -destination=../mocks/auth_mock.go -package=mocks
+//go:generate mockgen -source=auth.go -destination=../mocks/auth.mock.go -package=mocks
 
 type IRegistration interface {
 	SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error)

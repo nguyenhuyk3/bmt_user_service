@@ -22,14 +22,14 @@ import (
 )
 
 type authService struct {
-	SqlStore      *sqlc.SqlStore
+	SqlStore      sqlc.IStore
 	JwtMaker      jwt.IMaker
 	RedisClient   services.IRedis
 	MessageBroker services.IMessageBroker
 }
 
 func NewAuthService(
-	sqlStore *sqlc.SqlStore,
+	sqlStore sqlc.IStore,
 	jwtMaker jwt.IMaker,
 	redisClient services.IRedis,
 	messageBroker services.IMessageBroker) services.IAuth {
@@ -71,7 +71,7 @@ func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendO
 		return http.StatusConflict, errors.New("email is in complete registration process")
 	}
 	// Check if email already exists or not
-	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, arg.Email)
+	isExists, err := a.SqlStore.CheckAccountExistsByEmail(ctx, arg.Email)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
 	}
@@ -164,7 +164,7 @@ func (a *authService) CompleteRegistration(ctx context.Context, arg request.Comp
 func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
 	var result response.LoginRes
 
-	user, err := a.SqlStore.Queries.GetUserByEmail(ctx, arg.Email)
+	user, err := a.SqlStore.GetUserByEmail(ctx, arg.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return result, http.StatusNotFound, errors.New("user not found")
@@ -223,7 +223,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	go func() {
 		defer wg.Done()
 
-		_, err := a.SqlStore.Queries.UpdateAction(ctx, sqlc.UpdateActionParams{
+		_, err := a.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
 			Email: user.Email,
 			LoginAt: pgtype.Timestamptz{
 				Time:  time.Now(),
@@ -263,7 +263,7 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 // SendForgotPasswordOtp implements services.IAuth.
 func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
 	// * Step 1
-	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, arg.Email)
+	isExists, err := a.SqlStore.CheckAccountExistsByEmail(ctx, arg.Email)
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
 	}
@@ -388,7 +388,7 @@ func (a *authService) CompleteForgotPassword(ctx context.Context, arg request.Co
 	}
 
 	newPassword, _ := cryptor.BcryptHashInput(arg.NewPassword)
-	err = a.SqlStore.Queries.UpdatePassword(ctx, sqlc.UpdatePasswordParams{
+	err = a.SqlStore.UpdatePassword(ctx, sqlc.UpdatePasswordParams{
 		Email:    arg.Email,
 		Password: newPassword,
 	})
@@ -404,7 +404,7 @@ func (a *authService) CompleteForgotPassword(ctx context.Context, arg request.Co
 
 // Logout implements services.IAuth.
 func (a *authService) Logout(ctx context.Context, email string) (int, error) {
-	_, err := a.SqlStore.Queries.UpdateAction(ctx, sqlc.UpdateActionParams{
+	_, err := a.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
 		Email: email,
 		LoginAt: pgtype.Timestamptz{
 			Valid: false,
@@ -445,7 +445,7 @@ func (a *authService) InsertGoogleUser(ctx context.Context, arg response.GoogleU
 
 // CheckGoogleUserByEmail implements services.IAuth.
 func (a *authService) CheckGoogleUserByEmail(ctx context.Context, email string) (bool, error) {
-	isExists, err := a.SqlStore.Queries.CheckAccountExistsByEmail(ctx, email)
+	isExists, err := a.SqlStore.CheckAccountExistsByEmail(ctx, email)
 	if err != nil {
 		return false, fmt.Errorf("an error occur when querying to db: %v", err)
 	}

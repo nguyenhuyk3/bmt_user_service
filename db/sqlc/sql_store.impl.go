@@ -15,13 +15,6 @@ type SqlStore struct {
 	*Queries
 }
 
-func NewStore(connPool *pgxpool.Pool) *SqlStore {
-	return &SqlStore{
-		connPool: connPool,
-		Queries:  New(connPool),
-	}
-}
-
 func (s *SqlStore) execTran(ctx context.Context, fn func(*Queries) error) error {
 	// Start transaction
 	tran, err := s.connPool.Begin(ctx)
@@ -44,6 +37,7 @@ func (s *SqlStore) execTran(ctx context.Context, fn func(*Queries) error) error 
 	return tran.Commit(ctx)
 }
 
+// InsertAccountTran implements IStore.
 func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq, isFromOAuth2 bool) error {
 	err := s.execTran(ctx, func(q *Queries) error {
 		var role NullRoles
@@ -108,4 +102,11 @@ func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRe
 	}
 
 	return err
+}
+
+func NewStore(connPool *pgxpool.Pool) IStore {
+	return &SqlStore{
+		connPool: connPool,
+		Queries:  New(connPool),
+	}
 }

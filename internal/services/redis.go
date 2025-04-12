@@ -2,7 +2,7 @@ package services
 
 import "time"
 
-//go:generate mockgen -source=redis.go -destination=../internal/mocks/redis_moc.go -package=mocks
+//go:generate mockgen -source=redis.go -destination=../mocks/redis.mock.go -package=mocks
 
 type IRedis interface {
 	ExistsKey(key string) bool
