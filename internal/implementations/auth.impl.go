@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 	"user_service/db/sqlc"
 	"user_service/dto/messages"
@@ -167,85 +166,42 @@ func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response
 	user, err := a.SqlStore.GetUserByEmail(ctx, arg.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return result, http.StatusNotFound, errors.New("user not found")
+			return response.LoginRes{}, http.StatusNotFound, errors.New("user not found")
 		}
 
-		return result, http.StatusInternalServerError, fmt.Errorf("failed to fetch user: %w", err)
+		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to fetch user: %w", err)
 	}
 
 	isMatch := cryptor.BcryptCheckInput(user.Password, arg.Password)
 	if isMatch != nil {
-		return result, http.StatusUnauthorized, errors.New("password does not match")
+		return response.LoginRes{}, http.StatusUnauthorized, errors.New("password does not match")
 	}
 
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	var errChan = make(chan error, 3)
+	accessToken, accessPayload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles))
+	if err != nil {
+		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to create access token: %w", err)
+	}
+	result.AccessToken = accessToken
+	result.AccessPayload = accessPayload
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	refreshToken, _, err := a.JwtMaker.CreateRefreshToken(user.Email, string(user.Role.Roles))
+	if err != nil {
+		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to create refresh token: %w", err)
+	}
+	result.RefreshToken = refreshToken
 
-		token, payload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles))
-
-		mu.Lock()
-
-		defer mu.Unlock()
-
-		if err != nil {
-			errChan <- fmt.Errorf("failed to create access token: %w", err)
-			return
-		}
-
-		result.AccessToken = token
-		result.AccessPayload = payload
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		token, _, err := a.JwtMaker.CreateRefreshToken(user.Email, string(user.Role.Roles))
-
-		mu.Lock()
-
-		defer mu.Unlock()
-		if err != nil {
-			errChan <- fmt.Errorf("failed to create refresh token: %w", err)
-			return
-		}
-
-		result.RefreshToken = token
-		// result.RefreshPayload = payload
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
-		_, err := a.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
-			Email: user.Email,
-			LoginAt: pgtype.Timestamptz{
-				Time:  time.Now(),
-				Valid: true,
-			},
-			LogoutAt: pgtype.Timestamptz{
-				Valid: false,
-			},
-		})
-
-		if err != nil {
-			errChan <- fmt.Errorf("failed to update user_action: %w", err)
-		}
-	}()
-
-	wg.Wait()
-	close(errChan)
-
-	for err := range errChan {
-		if err != nil {
-			return result, http.StatusInternalServerError, err
-		}
+	_, err = a.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
+		Email: user.Email,
+		LoginAt: pgtype.Timestamptz{
+			Time:  time.Now(),
+			Valid: true,
+		},
+		LogoutAt: pgtype.Timestamptz{
+			Valid: false,
+		},
+	})
+	if err != nil {
+		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to update user action: %w", err)
 	}
 
 	return result, http.StatusOK, nil

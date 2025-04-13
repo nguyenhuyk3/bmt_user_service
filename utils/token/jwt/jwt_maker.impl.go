@@ -29,7 +29,7 @@ func NewJWTMaker(secretKey string) (IMaker, error) {
 }
 
 // CreateAccessToken implements Maker.
-func (j *JWTMaker) CreateAccessToken(email string, role string) (string, *payload, error) {
+func (j *JWTMaker) CreateAccessToken(email string, role string) (string, *Payload, error) {
 	payload, err := NewPayload(email, role, access_duration)
 	if err != nil {
 		return "", payload, err
@@ -43,7 +43,7 @@ func (j *JWTMaker) CreateAccessToken(email string, role string) (string, *payloa
 }
 
 // VerifyAccessToken implements Maker.
-func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
+func (j *JWTMaker) VerifyAccessToken(accessToken string) (*Payload, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
@@ -53,7 +53,7 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 		return []byte(j.secretKey), nil
 	}
 
-	parsedToken, err := jwt.ParseWithClaims(accessToken, &payload{}, keyFunc)
+	parsedToken, err := jwt.ParseWithClaims(accessToken, &Payload{}, keyFunc)
 	if err != nil {
 		vErr, ok := err.(*jwt.ValidationError)
 		if ok && errors.Is(vErr.Inner, ExpiredTokenErr) {
@@ -63,7 +63,7 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 		return nil, InvalidTokenErr
 	}
 
-	payload, ok := parsedToken.Claims.(*payload)
+	payload, ok := parsedToken.Claims.(*Payload)
 	if !ok || !parsedToken.Valid {
 		return nil, InvalidTokenErr
 	}
@@ -72,7 +72,7 @@ func (j *JWTMaker) VerifyAccessToken(accessToken string) (*payload, error) {
 }
 
 // CreateRefreshToken implements Maker.
-func (j *JWTMaker) CreateRefreshToken(email, role string) (string, *payload, error) {
+func (j *JWTMaker) CreateRefreshToken(email, role string) (string, *Payload, error) {
 	payload, err := NewPayload(email, role, refresh_duration)
 	if err != nil {
 		return "", nil, err
@@ -89,7 +89,7 @@ func (j *JWTMaker) CreateRefreshToken(email, role string) (string, *payload, err
 }
 
 // VerifyRefreshToken implements Maker.
-func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*payload, error) {
+func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*Payload, error) {
 	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
@@ -99,7 +99,7 @@ func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*payload, error) {
 		return []byte(j.secretKey), nil
 	}
 	// Parse the token
-	parsedToken, err := jwt.ParseWithClaims(refreshToken, &payload{}, keyFunc)
+	parsedToken, err := jwt.ParseWithClaims(refreshToken, &Payload{}, keyFunc)
 	if err != nil {
 		vErr, ok := err.(*jwt.ValidationError)
 		if ok && errors.Is(vErr.Inner, ExpiredTokenErr) {
@@ -108,7 +108,7 @@ func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*payload, error) {
 		return nil, InvalidTokenErr
 	}
 	// Extract claims from the token
-	claims, ok := parsedToken.Claims.(*payload)
+	claims, ok := parsedToken.Claims.(*Payload)
 	if !ok || !parsedToken.Valid {
 		return nil, InvalidTokenErr
 	}
@@ -117,7 +117,7 @@ func (j *JWTMaker) VerifyRefreshToken(refreshToken string) (*payload, error) {
 }
 
 // RefreshAccessToken cấp lại access_token từ refresh_token
-func (j *JWTMaker) RefreshAccessToken(refreshToken string) (string, *payload, error) {
+func (j *JWTMaker) RefreshAccessToken(refreshToken string) (string, *Payload, error) {
 	claims, err := j.VerifyRefreshToken(refreshToken)
 	if err != nil {
 		return "", nil, fmt.Errorf("invalid refresh token: %w", err)

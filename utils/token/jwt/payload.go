@@ -15,7 +15,7 @@ var (
 )
 
 // Payload contains the payload data of the token
-type payload struct {
+type Payload struct {
 	Id        uuid.UUID `json:"id"`
 	Issuer    string    `json:"iss"`
 	Email     string    `json:"email"`
@@ -27,13 +27,13 @@ type payload struct {
 }
 
 // NewPayload creates a new token payload with a specific username and duration
-func NewPayload(email string, role string, duration time.Duration) (*payload, error) {
+func NewPayload(email string, role string, duration time.Duration) (*Payload, error) {
 	tokenId, err := uuid.NewV4()
 	if err != nil {
 		return nil, err
 	}
 
-	payload := &payload{
+	payload := &Payload{
 		Id:        tokenId,
 		Issuer:    global.Config.Server.Issuer,
 		Email:     email,
@@ -49,7 +49,7 @@ func NewPayload(email string, role string, duration time.Duration) (*payload, er
 
 // Valid checks if the token payload is valid or not
 // This method will implement Claims interface from "jwt" package
-func (p *payload) Valid() error {
+func (p *Payload) Valid() error {
 	if time.Now().After(p.ExpiredAt) {
 		return ExpiredTokenErr
 	}
