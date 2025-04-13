@@ -808,3 +808,290 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 		})
 	}
 }
+
+func TestVerifyForgotPasswordOtp(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockJwt := mocks.NewMockIMaker(ctrl)
+	mockSqlStore := mocks.NewMockIStore(ctrl)
+	mockRedis := mocks.NewMockIRedis(ctrl)
+	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
+
+	email := "test-email@gmail.com"
+	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
+
+	// Generate encrypted email for testing
+	aesEncryptedEmail, _ := cryptor.AesEncrypt(email)
+	bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(email)
+
+	// Redis keys
+	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, aesEncryptedEmail)
+	completeProcessKey := fmt.Sprintf("%s%s", global.COMPLETE_FORGOT_PASSWORD_PROCESS, aesEncryptedEmail)
+
+	testCases := []struct {
+		name           string
+		setUp          func()
+		request        request.VerifyOtpReq
+		expectedStatus int
+		expectErr      bool
+	}{
+		{
+			name: "Redis get error",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(forgotPasswordKey, gomock.Any()).
+					Return(errors.New("redis error"))
+			},
+			request: request.VerifyOtpReq{
+				Email: email,
+				Otp:   otp,
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "OTP does not match",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(forgotPasswordKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						result := v.(*verifyOtp)
+						result.EncryptedEmail = bcryptEncryptedEmail
+						result.Otp = "654321" // Different OTP
+
+						return nil
+					})
+			},
+			request: request.VerifyOtpReq{
+				Email: email,
+				Otp:   otp,
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectErr:      true,
+		},
+		{
+			name: "Email does not match",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(forgotPasswordKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						result := v.(*verifyOtp)
+						// A different hashed email that won't match when checking
+						result.EncryptedEmail = "incorrect_hash"
+						result.Otp = otp
+
+						return nil
+					})
+			},
+			request: request.VerifyOtpReq{
+				Email: email,
+				Otp:   otp,
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectErr:      true,
+		},
+		{
+			name: "OTP verification successful",
+			setUp: func() {
+				mockRedis.EXPECT().
+					Get(forgotPasswordKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						result := v.(*verifyOtp)
+						result.EncryptedEmail = bcryptEncryptedEmail
+						result.Otp = otp
+
+						return nil
+					})
+				mockRedis.EXPECT().
+					Delete(forgotPasswordKey).
+					Return(nil)
+				mockRedis.EXPECT().
+					Save(completeProcessKey, gomock.Any(), int64(ten_minutes)).
+					Return(nil)
+			},
+			request: request.VerifyOtpReq{
+				Email: email,
+				Otp:   otp,
+			},
+			expectedStatus: http.StatusOK,
+			expectErr:      false,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setUp()
+
+			status, err := authService.VerifyForgotPasswordOtp(context.TODO(), tc.request)
+
+			assert.Equal(t, tc.expectedStatus, status)
+
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCompleteForgotPassword(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockJwt := mocks.NewMockIMaker(ctrl)
+	mockSqlStore := mocks.NewMockIStore(ctrl)
+	mockRedis := mocks.NewMockIRedis(ctrl)
+	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
+
+	email := "test-email@gmail.com"
+	newPassword := "NewSecurePassword123!"
+	aesEncryptedEmail, _ := cryptor.AesEncrypt(email)
+	bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(email)
+	completeProcessKey := fmt.Sprintf("%s%s", global.COMPLETE_FORGOT_PASSWORD_PROCESS, aesEncryptedEmail)
+	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail)
+
+	testCases := []struct {
+		name           string
+		setUp          func()
+		request        request.CompleteForgotPasswordReq
+		expectedStatus int
+		expectErr      bool
+	}{
+		{
+			name: "Key does not exist in Redis",
+			setUp: func() {
+				mockRedis.EXPECT().
+					ExistsKey(completeProcessKey).
+					Return(false)
+			},
+			request: request.CompleteForgotPasswordReq{
+				Email:       email,
+				NewPassword: newPassword,
+			},
+			expectedStatus: http.StatusConflict,
+			expectErr:      true,
+		},
+		{
+			name: "Redis get error",
+			setUp: func() {
+				mockRedis.EXPECT().
+					ExistsKey(completeProcessKey).
+					Return(true)
+				mockRedis.EXPECT().
+					Get(completeProcessKey, gomock.Any()).
+					Return(errors.New("redis error"))
+			},
+			request: request.CompleteForgotPasswordReq{
+				Email:       email,
+				NewPassword: newPassword,
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "Email mismatch",
+			setUp: func() {
+				mockRedis.EXPECT().
+					ExistsKey(completeProcessKey).
+					Return(true)
+				mockRedis.EXPECT().
+					Get(completeProcessKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						result := v.(*verifyOtp)
+						// A different hashed email that won't match when checking
+						result.EncryptedEmail = "incorrect_hash"
+						return nil
+					})
+			},
+			request: request.CompleteForgotPasswordReq{
+				Email:       email,
+				NewPassword: newPassword,
+			},
+			expectedStatus: http.StatusUnauthorized,
+			expectErr:      true,
+		},
+		{
+			name: "SQL update password error",
+			setUp: func() {
+				mockRedis.EXPECT().
+					ExistsKey(completeProcessKey).
+					Return(true)
+				mockRedis.EXPECT().
+					Get(completeProcessKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						result := v.(*verifyOtp)
+						result.EncryptedEmail = bcryptEncryptedEmail
+						return nil
+					})
+				mockSqlStore.EXPECT().
+					UpdatePassword(gomock.Any(), gomock.Any()).
+					Return(errors.New("database error"))
+			},
+			request: request.CompleteForgotPasswordReq{
+				Email:       email,
+				NewPassword: newPassword,
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "Password reset successful",
+			setUp: func() {
+				mockRedis.EXPECT().
+					ExistsKey(completeProcessKey).
+					Return(true)
+				mockRedis.EXPECT().
+					Get(completeProcessKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						result := v.(*verifyOtp)
+						result.EncryptedEmail = bcryptEncryptedEmail
+						return nil
+					})
+				mockSqlStore.EXPECT().
+					UpdatePassword(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, params sqlc.UpdatePasswordParams) error {
+						assert.Equal(t, email, params.Email)
+						// Check that the password is hashed
+						assert.NotEqual(t, newPassword, params.Password)
+						return nil
+					})
+				mockRedis.EXPECT().
+					Delete(attemptKey).
+					Return(nil)
+				mockRedis.EXPECT().
+					Delete(completeProcessKey).
+					Return(nil)
+			},
+			request: request.CompleteForgotPasswordReq{
+				Email:       email,
+				NewPassword: newPassword,
+			},
+			expectedStatus: http.StatusOK,
+			expectErr:      false,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setUp()
+
+			status, err := authService.CompleteForgotPassword(context.TODO(), tc.request)
+
+			assert.Equal(t, tc.expectedStatus, status)
+
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
