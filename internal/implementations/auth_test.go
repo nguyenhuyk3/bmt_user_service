@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 	"user_service/db/sqlc"
 	"user_service/dto/request"
 	"user_service/dto/response"
@@ -19,6 +20,7 @@ import (
 	"user_service/utils/token/jwt"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -586,6 +588,222 @@ func TestLogin(t *testing.T) {
 				assert.Equal(t, tc.expectedResponse.AccessToken, res.AccessToken)
 				assert.Equal(t, tc.expectedResponse.RefreshToken, res.RefreshToken)
 				// You can add more assertions for the payload if needed
+			}
+		})
+	}
+}
+
+func TestSendForgotPasswordOtp(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockJwt := mocks.NewMockIMaker(ctrl)
+	mockSqlStore := mocks.NewMockIStore(ctrl)
+	mockRedis := mocks.NewMockIRedis(ctrl)
+	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
+
+	email := "test-email@gmail.com"
+	aesEncryptedEmail, _ := cryptor.AesEncrypt(email)
+	// bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(email)
+
+	// Keys for Redis
+	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail)
+	blockKey := fmt.Sprintf("%s%s", global.BLOCK_FORGOT_PASSWORD_KEY, aesEncryptedEmail)
+	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, aesEncryptedEmail)
+
+	var res blockSendForgotPasswordOtp
+	// otp, _ := generator.GenerateStringNumberBasedOnLength(6)
+
+	testCases := []struct {
+		name           string
+		setUp          func()
+		request        request.SendOtpReq
+		expectedStatus int
+		expectErr      bool
+	}{
+		{
+			name: "Error checking email existence",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(false, errors.New("database error"))
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+		{
+			name: "Email doesn't exist",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(false, nil)
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusNotFound,
+			expectErr:      true,
+		},
+		{
+			name: "Account is blocked",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(true, nil)
+				mockRedis.EXPECT().
+					GetTTL(blockKey).
+					Return(time.Hour, nil)
+				mockRedis.EXPECT().
+					Delete(attemptKey).
+					Return(nil)
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusTooManyRequests,
+			expectErr:      true,
+		},
+		{
+			name: "First attempt - should succeed",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(true, nil)
+				mockRedis.EXPECT().
+					GetTTL(blockKey).
+					Return(time.Duration(0), nil)
+				mockRedis.EXPECT().
+					Get(attemptKey, gomock.Any()).
+					SetArg(1, res).
+					Return(redis.Nil)
+				mockRedis.EXPECT().
+					Save(attemptKey, gomock.Any(), int64(three_hours)).
+					Return(nil)
+				mockRedis.EXPECT().
+					GetTTL(forgotPasswordKey).
+					Return(time.Duration(0), nil)
+				mockBroker.EXPECT().
+					SendMessage(
+						global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC,
+						email,
+						gomock.Any()).
+					Return(nil)
+				mockRedis.EXPECT().
+					Save(forgotPasswordKey, gomock.Any(), int64(three_minutes)).
+					Return(nil)
+				mockRedis.EXPECT().
+					Save(attemptKey, gomock.Any(), int64(three_hours)).
+					Return(nil)
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusOK,
+			expectErr:      false,
+		},
+		{
+			name: "Too many attempts",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(true, nil)
+				mockRedis.EXPECT().
+					GetTTL(blockKey).
+					Return(time.Duration(0), errors.New("key not found"))
+				mockRedis.EXPECT().
+					Get(attemptKey, gomock.Any()).
+					DoAndReturn(func(_ string, v interface{}) error {
+						blockData := v.(*blockSendForgotPasswordOtp)
+						blockData.Count = 3
+
+						return nil
+					})
+				mockRedis.EXPECT().
+					Save(blockKey, gomock.Any(), int64(three_hours)).
+					Return(nil)
+				mockRedis.EXPECT().
+					Delete(attemptKey).
+					Return(nil)
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusTooManyRequests,
+			expectErr:      true,
+		},
+		{
+			name: "OTP already exists and not expired",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(true, nil)
+				mockRedis.EXPECT().
+					GetTTL(blockKey).
+					Return(time.Duration(0), errors.New("key not found"))
+				mockRedis.EXPECT().
+					Get(attemptKey, gomock.Any()).
+					Return(nil)
+				mockRedis.EXPECT().
+					GetTTL(forgotPasswordKey).
+					Return(time.Minute, nil)
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusTooManyRequests,
+			expectErr:      true,
+		},
+		{
+			name: "Send email fails",
+			setUp: func() {
+				mockSqlStore.EXPECT().
+					CheckAccountExistsByEmail(gomock.Any(), email).
+					Return(true, nil)
+				mockRedis.EXPECT().
+					GetTTL(blockKey).
+					Return(time.Duration(0), errors.New("key not found"))
+				mockRedis.EXPECT().
+					Get(attemptKey, gomock.Any()).
+					Return(nil)
+				mockRedis.EXPECT().
+					GetTTL(forgotPasswordKey).
+					Return(time.Duration(0), nil)
+				mockBroker.EXPECT().
+					SendMessage(
+						global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC,
+						email,
+						gomock.Any()).
+					Return(errors.New("failed to send email"))
+				mockRedis.EXPECT().
+					Delete(attemptKey).
+					Return(nil)
+			},
+			request: request.SendOtpReq{
+				Email: email,
+			},
+			expectedStatus: http.StatusInternalServerError,
+			expectErr:      true,
+		},
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setUp()
+
+			status, err := authService.SendForgotPasswordOtp(context.TODO(), tc.request)
+
+			assert.Equal(t, tc.expectedStatus, status)
+
+			if tc.expectErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
