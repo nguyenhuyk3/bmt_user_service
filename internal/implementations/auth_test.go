@@ -419,9 +419,6 @@ func TestLogin(t *testing.T) {
 	accessToken, err := generator.GenerateStringNumberBasedOnLength(64)
 	require.NoError(t, err)
 
-	// accessPayload, err := jwt.NewPayload(email, global.CUSTOMER_ROLE, 10*time.Minute)
-	// require.NoError(t, err)
-
 	refreshToken, err := generator.GenerateStringNumberBasedOnLength(64)
 	require.NoError(t, err)
 
