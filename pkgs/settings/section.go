@@ -6,12 +6,13 @@ type Config struct {
 }
 
 type serviceSetting struct {
-	PostgreSql    postgreSetting `mapstructure:"database"`
-	MailSetting   mailSetting    `mapstructure:"mail"`
-	RedisSetting  redisSetting   `mapstructure:"redis"`
-	KafkaSetting  kafkaSetting   `mapstructure:"kafka"`
-	GoogleOAuth2  googleOAuth2   `mapstructure:"google_oauth_2"`
-	LoggerSetting LoggerSetting  `mapstructure:"zap_log"`
+	PostgreSql     postgreSetting `mapstructure:"database"`
+	MailSetting    mailSetting    `mapstructure:"mail"`
+	RedisSetting   redisSetting   `mapstructure:"redis"`
+	KafkaSetting   kafkaSetting   `mapstructure:"kafka"`
+	GoogleOAuth2   googleOAuth2   `mapstructure:"google_oauth_2"`
+	FacebookOAuth2 facebookOAuth2 `mapstructure:"facebook_oauth_2"`
+	LoggerSetting  LoggerSetting  `mapstructure:"zap_log"`
 }
 
 type serverSetting struct {
@@ -59,6 +60,12 @@ type googleOAuth2 struct {
 	RedirectUrl  string `mapstructure:"redirect_url"`
 	ClientId     string `mapstructure:"client_id"`
 	ClientSecret string `mapstructure:"client_sercet"`
+}
+
+type facebookOAuth2 struct {
+	RedirectUrl string `mapstructure:"redirect_url"`
+	AppId       string `mapstructure:"app_id"`
+	AppSecret   string `mapstructure:"app_sercet"`
 }
 
 type LoggerSetting struct {

@@ -19,6 +19,8 @@ func InitAuthController() (*controllers.AuthController, error) {
 		implementations.NewAuthService,
 
 		provider.ProvideGoogleOAuthConfig,
+		provider.ProvideFacebookOAuthConfig,
+
 		controllers.NewAuthController,
 	)
 

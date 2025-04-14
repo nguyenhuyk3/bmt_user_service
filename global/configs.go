@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -15,3 +16,6 @@ var (
 	Logger     *loggers.LoggerZap
 	// Queries    *sqlc.Queries
 )
+
+type GoogleOAuthConfig *oauth2.Config
+type FacebookOAuthConfig *oauth2.Config

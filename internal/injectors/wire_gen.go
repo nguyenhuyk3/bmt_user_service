@@ -30,8 +30,9 @@ func InitAuthController() (*controllers.AuthController, error) {
 	iRedis := redis.NewRedisClient()
 	iMessageBroker := messagebroker.NewKafkaMessageBroker()
 	iAuth := implementations.NewAuthService(iStore, iMaker, iRedis, iMessageBroker)
-	config := provider.ProvideGoogleOAuthConfig()
-	authController := controllers.NewAuthController(iAuth, config)
+	googleOAuthConfig := provider.ProvideGoogleOAuthConfig()
+	facebookOAuthConfig := provider.ProvideFacebookOAuthConfig()
+	authController := controllers.NewAuthController(iAuth, googleOAuthConfig, facebookOAuthConfig)
 	return authController, nil
 }
 

@@ -29,6 +29,8 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup, authMiddleware *mi
 
 		authRouterPublic.GET("/oauth2/google_login", authController.GoogleLogin)
 		authRouterPublic.GET("/oauth2/google/callback", authController.GoogleCallback)
+		authRouterPublic.GET("/oauth2/facebook_login", authController.FacebookLogin)
+		authRouterPublic.GET("/oauth2/facebook/callback", authController.FacebookgCallbak)
 
 		authRouterPublic.POST("/logout",
 			authMiddleware.GetAccessToken(),

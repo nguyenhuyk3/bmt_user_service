@@ -378,7 +378,7 @@ func (a *authService) Logout(ctx context.Context, email string) (int, error) {
 }
 
 // InsertGoogleUser implements services.IAuth.
-func (a *authService) InsertGoogleUser(ctx context.Context, arg response.GoogleUserInfo) (int, error) {
+func (a *authService) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	hasedPassword, _ := cryptor.BcryptHashInput(arg.Id)
 	err := a.SqlStore.InsertAccountTran(ctx, request.CompleteRegistrationReq{
 		Account: request.Account{
@@ -399,8 +399,8 @@ func (a *authService) InsertGoogleUser(ctx context.Context, arg response.GoogleU
 	return http.StatusOK, nil
 }
 
-// CheckGoogleUserByEmail implements services.IAuth.
-func (a *authService) CheckGoogleUserByEmail(ctx context.Context, email string) (bool, error) {
+// CheckOAuth2UserByEmail implements services.IAuth.
+func (a *authService) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
 	isExists, err := a.SqlStore.CheckAccountExistsByEmail(ctx, email)
 	if err != nil {
 		return false, fmt.Errorf("an error occur when querying to db: %v", err)

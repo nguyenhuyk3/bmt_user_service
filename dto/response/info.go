@@ -7,11 +7,11 @@ type GetInfoRes struct {
 	BirthDay string `json:"birth_day" binding:"required"`
 }
 
-type GoogleUserInfo struct {
-	Email         string `json:"email" binding:"required"`
-	GivenName     string `json:"given_name" binding:"required"`
+type OAuth2UserInfo struct {
 	Id            string `json:"id" binding:"required"`
+	Email         string `json:"email" binding:"required"`
 	Name          string `json:"name" binding:"required"`
-	Picture       string `json:"picture" binding:"required"`
-	VerifiedEmail bool   `json:"verified_email" binding:"required"`
+	GivenName     string `json:"given_name,omitempty"`
+	Picture       string `json:"picture,omitempty"`
+	VerifiedEmail bool   `json:"verified_email,omitempty"`
 }

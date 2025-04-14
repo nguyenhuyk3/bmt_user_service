@@ -235,62 +235,62 @@ func (mr *MockILogoutMockRecorder) Logout(ctx, email any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockILogout)(nil).Logout), ctx, email)
 }
 
-// MockIGoogleLogin is a mock of IGoogleLogin interface.
-type MockIGoogleLogin struct {
+// MockIOAuth2Login is a mock of IOAuth2Login interface.
+type MockIOAuth2Login struct {
 	ctrl     *gomock.Controller
-	recorder *MockIGoogleLoginMockRecorder
+	recorder *MockIOAuth2LoginMockRecorder
 	isgomock struct{}
 }
 
-// MockIGoogleLoginMockRecorder is the mock recorder for MockIGoogleLogin.
-type MockIGoogleLoginMockRecorder struct {
-	mock *MockIGoogleLogin
+// MockIOAuth2LoginMockRecorder is the mock recorder for MockIOAuth2Login.
+type MockIOAuth2LoginMockRecorder struct {
+	mock *MockIOAuth2Login
 }
 
-// NewMockIGoogleLogin creates a new mock instance.
-func NewMockIGoogleLogin(ctrl *gomock.Controller) *MockIGoogleLogin {
-	mock := &MockIGoogleLogin{ctrl: ctrl}
-	mock.recorder = &MockIGoogleLoginMockRecorder{mock}
+// NewMockIOAuth2Login creates a new mock instance.
+func NewMockIOAuth2Login(ctrl *gomock.Controller) *MockIOAuth2Login {
+	mock := &MockIOAuth2Login{ctrl: ctrl}
+	mock.recorder = &MockIOAuth2LoginMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIGoogleLogin) EXPECT() *MockIGoogleLoginMockRecorder {
+func (m *MockIOAuth2Login) EXPECT() *MockIOAuth2LoginMockRecorder {
 	return m.recorder
 }
 
-// CheckGoogleUserByEmail mocks base method.
-func (m *MockIGoogleLogin) CheckGoogleUserByEmail(ctx context.Context, email string) (bool, error) {
+// CheckOAuth2UserByEmail mocks base method.
+func (m *MockIOAuth2Login) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckGoogleUserByEmail", ctx, email)
+	ret := m.ctrl.Call(m, "CheckOAuth2UserByEmail", ctx, email)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CheckGoogleUserByEmail indicates an expected call of CheckGoogleUserByEmail.
-func (mr *MockIGoogleLoginMockRecorder) CheckGoogleUserByEmail(ctx, email any) *gomock.Call {
+// CheckOAuth2UserByEmail indicates an expected call of CheckOAuth2UserByEmail.
+func (mr *MockIOAuth2LoginMockRecorder) CheckOAuth2UserByEmail(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckGoogleUserByEmail", reflect.TypeOf((*MockIGoogleLogin)(nil).CheckGoogleUserByEmail), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIOAuth2Login)(nil).CheckOAuth2UserByEmail), ctx, email)
 }
 
-// InsertGoogleUser mocks base method.
-func (m *MockIGoogleLogin) InsertGoogleUser(ctx context.Context, arg response.GoogleUserInfo) (int, error) {
+// InserOAuth2UsertUser mocks base method.
+func (m *MockIOAuth2Login) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertGoogleUser", ctx, arg)
+	ret := m.ctrl.Call(m, "InserOAuth2UsertUser", ctx, arg)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// InsertGoogleUser indicates an expected call of InsertGoogleUser.
-func (mr *MockIGoogleLoginMockRecorder) InsertGoogleUser(ctx, arg any) *gomock.Call {
+// InserOAuth2UsertUser indicates an expected call of InserOAuth2UsertUser.
+func (mr *MockIOAuth2LoginMockRecorder) InserOAuth2UsertUser(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertGoogleUser", reflect.TypeOf((*MockIGoogleLogin)(nil).InsertGoogleUser), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2UsertUser", reflect.TypeOf((*MockIOAuth2Login)(nil).InserOAuth2UsertUser), ctx, arg)
 }
 
 // ReturnToken mocks base method.
-func (m *MockIGoogleLogin) ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error) {
+func (m *MockIOAuth2Login) ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReturnToken", ctx, email)
 	ret0, _ := ret[0].(response.LoginRes)
@@ -300,9 +300,9 @@ func (m *MockIGoogleLogin) ReturnToken(ctx context.Context, email string) (respo
 }
 
 // ReturnToken indicates an expected call of ReturnToken.
-func (mr *MockIGoogleLoginMockRecorder) ReturnToken(ctx, email any) *gomock.Call {
+func (mr *MockIOAuth2LoginMockRecorder) ReturnToken(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReturnToken", reflect.TypeOf((*MockIGoogleLogin)(nil).ReturnToken), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReturnToken", reflect.TypeOf((*MockIOAuth2Login)(nil).ReturnToken), ctx, email)
 }
 
 // MockIAuth is a mock of IAuth interface.
@@ -329,19 +329,19 @@ func (m *MockIAuth) EXPECT() *MockIAuthMockRecorder {
 	return m.recorder
 }
 
-// CheckGoogleUserByEmail mocks base method.
-func (m *MockIAuth) CheckGoogleUserByEmail(ctx context.Context, email string) (bool, error) {
+// CheckOAuth2UserByEmail mocks base method.
+func (m *MockIAuth) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckGoogleUserByEmail", ctx, email)
+	ret := m.ctrl.Call(m, "CheckOAuth2UserByEmail", ctx, email)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CheckGoogleUserByEmail indicates an expected call of CheckGoogleUserByEmail.
-func (mr *MockIAuthMockRecorder) CheckGoogleUserByEmail(ctx, email any) *gomock.Call {
+// CheckOAuth2UserByEmail indicates an expected call of CheckOAuth2UserByEmail.
+func (mr *MockIAuthMockRecorder) CheckOAuth2UserByEmail(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckGoogleUserByEmail", reflect.TypeOf((*MockIAuth)(nil).CheckGoogleUserByEmail), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIAuth)(nil).CheckOAuth2UserByEmail), ctx, email)
 }
 
 // CompleteForgotPassword mocks base method.
@@ -374,19 +374,19 @@ func (mr *MockIAuthMockRecorder) CompleteRegistration(ctx, arg any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteRegistration", reflect.TypeOf((*MockIAuth)(nil).CompleteRegistration), ctx, arg)
 }
 
-// InsertGoogleUser mocks base method.
-func (m *MockIAuth) InsertGoogleUser(ctx context.Context, arg response.GoogleUserInfo) (int, error) {
+// InserOAuth2UsertUser mocks base method.
+func (m *MockIAuth) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertGoogleUser", ctx, arg)
+	ret := m.ctrl.Call(m, "InserOAuth2UsertUser", ctx, arg)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// InsertGoogleUser indicates an expected call of InsertGoogleUser.
-func (mr *MockIAuthMockRecorder) InsertGoogleUser(ctx, arg any) *gomock.Call {
+// InserOAuth2UsertUser indicates an expected call of InserOAuth2UsertUser.
+func (mr *MockIAuthMockRecorder) InserOAuth2UsertUser(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertGoogleUser", reflect.TypeOf((*MockIAuth)(nil).InsertGoogleUser), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2UsertUser", reflect.TypeOf((*MockIAuth)(nil).InserOAuth2UsertUser), ctx, arg)
 }
 
 // Login mocks base method.

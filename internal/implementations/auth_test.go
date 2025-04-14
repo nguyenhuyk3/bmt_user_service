@@ -1169,7 +1169,7 @@ func TestInsertGoogleUser(t *testing.T) {
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
 	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
 
-	googleUserInfo := response.GoogleUserInfo{
+	googleUserInfo := response.OAuth2UserInfo{
 		Id:    "123456789",
 		Email: "google-user@gmail.com",
 		Name:  "Google User",
@@ -1178,7 +1178,7 @@ func TestInsertGoogleUser(t *testing.T) {
 	testCases := []struct {
 		name           string
 		setUp          func()
-		userInfo       response.GoogleUserInfo
+		userInfo       response.OAuth2UserInfo
 		expectedStatus int
 		expectErr      bool
 	}{
@@ -1223,7 +1223,7 @@ func TestInsertGoogleUser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := authService.InsertGoogleUser(context.TODO(), tc.userInfo)
+			status, err := authService.InserOAuth2UsertUser(context.TODO(), tc.userInfo)
 
 			assert.Equal(t, tc.expectedStatus, status)
 
@@ -1297,7 +1297,7 @@ func TestCheckGoogleUserByEmail(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			exists, err := authService.CheckGoogleUserByEmail(context.TODO(), tc.email)
+			exists, err := authService.CheckOAuth2UserByEmail(context.TODO(), tc.email)
 
 			assert.Equal(t, tc.expectedExist, exists)
 
