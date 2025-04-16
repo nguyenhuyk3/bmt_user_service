@@ -35,7 +35,6 @@ type IOAuth2Login interface {
 }
 
 type IAuth interface {
-	IRegistration
 	ILogin
 	IOAuth2Login
 	IForgotPassword

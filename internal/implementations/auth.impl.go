@@ -46,119 +46,6 @@ const (
 	three_hours   = 3 * 60
 )
 
-/*
-* SendRegistrationOtp will consist of 3 steps:
-*	- Step 1: Check in redis whether the registered email has an otp code or not
-*				(If the otp code exists, the email is in the registration process)
-*	- Step 2: If step 1 is passed, check whether the registered email is in the process of completion or not
-*	- Step 3: If the above steps are passed, start sending the OTP code
- */
-// SendRegistrationOtp implements services.IAuthUser.
-func (a *authService) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
-	// * Step 1
-	encryptedAesEmail, _ := cryptor.AesEncrypt(arg.Email)
-	registrationOtpKey := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedAesEmail)
-
-	isExists := a.RedisClient.ExistsKey(registrationOtpKey)
-	if isExists {
-		return http.StatusConflict, errors.New("email is in registration status")
-	}
-	// * Step 2
-	completeRegistrationProcessKey := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedAesEmail)
-	isExists = a.RedisClient.ExistsKey(completeRegistrationProcessKey)
-	if isExists {
-		return http.StatusConflict, errors.New("email is in complete registration process")
-	}
-	// Check if email already exists or not
-	isExists, err := a.SqlStore.CheckAccountExistsByEmail(ctx, arg.Email)
-	if err != nil {
-		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
-	}
-	if isExists {
-		return http.StatusConflict, errors.New("email already exists")
-	}
-	// * Step 3
-	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
-	encryptedBcryptEmail, _ := cryptor.BcryptHashInput(arg.Email)
-	// Save email and otp is in registration status
-	_ = a.RedisClient.Save(registrationOtpKey, verifyOtp{
-		EncryptedEmail: encryptedBcryptEmail,
-		Otp:            otp,
-	}, ten_minutes)
-	message := messages.MailMessage{
-		Payload: messages.OtpMessage{
-			Email:          arg.Email,
-			Otp:            otp,
-			ExpirationTime: ten_minutes,
-		},
-	}
-
-	err = a.MessageBroker.SendMessage(
-		global.REGISTRATION_OTP_EMAIL_TOPIC,
-		arg.Email,
-		message)
-	if err != nil {
-		a.RedisClient.Delete(registrationOtpKey)
-
-		return http.StatusInternalServerError, fmt.Errorf("failed to send OTP to Kafka: %v", err)
-	}
-
-	return http.StatusOK, nil
-}
-
-// VerifyRegistrationOtp implements services.IAuthUser.
-func (a *authService) VerifyRegistrationOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
-	encryptedEmail, _ := cryptor.AesEncrypt(arg.Email)
-	key := fmt.Sprintf("%s%s", global.REDIS_REGISTRATION_OTP_KEY, encryptedEmail)
-
-	var result verifyOtp
-
-	err := a.RedisClient.Get(key, &result)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("otp has expired: %v", err)
-	}
-
-	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Email)
-	if isMatch == nil && arg.Otp == result.Otp {
-		_ = a.RedisClient.Delete(key)
-		_ = a.RedisClient.Save(fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedEmail),
-			map[string]interface{}{
-				"encrypted_email": result.EncryptedEmail,
-			}, ten_minutes)
-
-		return http.StatusOK, nil
-	}
-
-	return http.StatusUnauthorized, fmt.Errorf("invalid email or otp")
-}
-
-// CompleteRegister implements services.IAuth.
-func (a *authService) CompleteRegistration(ctx context.Context, arg request.CompleteRegistrationReq) (int, error) {
-	encryptedEmail, _ := cryptor.AesEncrypt(arg.Account.Email)
-	key := fmt.Sprintf("%s%s", global.REDIS_COMPLETE_REGISTRATION_PROCESS, encryptedEmail)
-
-	var result verifyOtp
-
-	err := a.RedisClient.Get(key, &result)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("email is not in complete registration process %v", err)
-	}
-
-	isMatch := cryptor.BcryptCheckInput(result.EncryptedEmail, arg.Account.Email)
-	if isMatch != nil {
-		return http.StatusBadRequest, errors.New("encrypted email and email don't match")
-	}
-
-	err = a.SqlStore.InsertAccountTran(ctx, arg, false)
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to complete registration: %w", err)
-	}
-
-	_ = a.RedisClient.Delete(key)
-
-	return http.StatusCreated, nil
-}
-
 // Login implements services.IAuthUser.
 func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
 	var result response.LoginRes
@@ -277,6 +164,7 @@ func (a *authService) SendForgotPasswordOtp(ctx context.Context, arg request.Sen
 	}
 	// * Step 6
 	err = a.MessageBroker.SendMessage(
+		ctx,
 		global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC,
 		arg.Email,
 		message)

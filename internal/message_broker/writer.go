@@ -17,7 +17,7 @@ type KafkaMessageBroker struct {
 }
 
 // SendMessage implements services.IMessageBroker.
-func (k *KafkaMessageBroker) SendMessage(topic string, key string, message interface{}) error {
+func (k *KafkaMessageBroker) SendMessage(ctx context.Context, topic string, key string, message interface{}) error {
 	if writer == nil {
 		initKafkaWriter()
 	}
@@ -32,7 +32,7 @@ func (k *KafkaMessageBroker) SendMessage(topic string, key string, message inter
 		return err
 	}
 
-	err = writer.WriteMessages(context.Background(), kafka.Message{
+	err = writer.WriteMessages(ctx, kafka.Message{
 		Topic: topic,
 		Key:   []byte(key),
 		Value: msgBytes,

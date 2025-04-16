@@ -10,6 +10,7 @@ import (
 	"user_service/db/sqlc"
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
+	"user_service/internal/implementations/registration"
 	"user_service/internal/injectors/provider"
 	"user_service/internal/message_broker"
 	"user_service/internal/middlewares"
@@ -22,17 +23,18 @@ import (
 func InitAuthController() (*controllers.AuthController, error) {
 	pool := provider.ProvidePgxPool()
 	iStore := sqlc.NewStore(pool)
+	iRedis := redis.NewRedisClient()
+	iMessageBroker := messagebroker.NewKafkaMessageBroker()
+	iRegistration := registration.NewRegistrationService(iStore, iRedis, iMessageBroker)
 	string2 := provider.ProvideSecretKey()
 	iMaker, err := jwt.NewJWTMaker(string2)
 	if err != nil {
 		return nil, err
 	}
-	iRedis := redis.NewRedisClient()
-	iMessageBroker := messagebroker.NewKafkaMessageBroker()
 	iAuth := implementations.NewAuthService(iStore, iMaker, iRedis, iMessageBroker)
 	googleOAuthConfig := provider.ProvideGoogleOAuthConfig()
 	facebookOAuthConfig := provider.ProvideFacebookOAuthConfig()
-	authController := controllers.NewAuthController(iAuth, googleOAuthConfig, facebookOAuthConfig)
+	authController := controllers.NewAuthController(iRegistration, iAuth, googleOAuthConfig, facebookOAuthConfig)
 	return authController, nil
 }
 

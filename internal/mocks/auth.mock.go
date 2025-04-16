@@ -359,21 +359,6 @@ func (mr *MockIAuthMockRecorder) CompleteForgotPassword(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteForgotPassword", reflect.TypeOf((*MockIAuth)(nil).CompleteForgotPassword), ctx, arg)
 }
 
-// CompleteRegistration mocks base method.
-func (m *MockIAuth) CompleteRegistration(ctx context.Context, arg request.CompleteRegistrationReq) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CompleteRegistration", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CompleteRegistration indicates an expected call of CompleteRegistration.
-func (mr *MockIAuthMockRecorder) CompleteRegistration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteRegistration", reflect.TypeOf((*MockIAuth)(nil).CompleteRegistration), ctx, arg)
-}
-
 // InserOAuth2UsertUser mocks base method.
 func (m *MockIAuth) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	m.ctrl.T.Helper()
@@ -451,21 +436,6 @@ func (mr *MockIAuthMockRecorder) SendForgotPasswordOtp(ctx, arg any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendForgotPasswordOtp", reflect.TypeOf((*MockIAuth)(nil).SendForgotPasswordOtp), ctx, arg)
 }
 
-// SendRegistrationOtp mocks base method.
-func (m *MockIAuth) SendRegistrationOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendRegistrationOtp", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SendRegistrationOtp indicates an expected call of SendRegistrationOtp.
-func (mr *MockIAuthMockRecorder) SendRegistrationOtp(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendRegistrationOtp", reflect.TypeOf((*MockIAuth)(nil).SendRegistrationOtp), ctx, arg)
-}
-
 // VerifyForgotPasswordOtp mocks base method.
 func (m *MockIAuth) VerifyForgotPasswordOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
 	m.ctrl.T.Helper()
@@ -479,19 +449,4 @@ func (m *MockIAuth) VerifyForgotPasswordOtp(ctx context.Context, arg request.Ver
 func (mr *MockIAuthMockRecorder) VerifyForgotPasswordOtp(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyForgotPasswordOtp", reflect.TypeOf((*MockIAuth)(nil).VerifyForgotPasswordOtp), ctx, arg)
-}
-
-// VerifyRegistrationOtp mocks base method.
-func (m *MockIAuth) VerifyRegistrationOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VerifyRegistrationOtp", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VerifyRegistrationOtp indicates an expected call of VerifyRegistrationOtp.
-func (mr *MockIAuthMockRecorder) VerifyRegistrationOtp(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyRegistrationOtp", reflect.TypeOf((*MockIAuth)(nil).VerifyRegistrationOtp), ctx, arg)
 }

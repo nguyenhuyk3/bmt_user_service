@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -52,15 +53,15 @@ func (mr *MockIMessageBrokerMockRecorder) Close() *gomock.Call {
 }
 
 // SendMessage mocks base method.
-func (m *MockIMessageBroker) SendMessage(topic, key string, message any) error {
+func (m *MockIMessageBroker) SendMessage(ctx context.Context, topic, key string, message any) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMessage", topic, key, message)
+	ret := m.ctrl.Call(m, "SendMessage", ctx, topic, key, message)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendMessage indicates an expected call of SendMessage.
-func (mr *MockIMessageBrokerMockRecorder) SendMessage(topic, key, message any) *gomock.Call {
+func (mr *MockIMessageBrokerMockRecorder) SendMessage(ctx, topic, key, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockIMessageBroker)(nil).SendMessage), topic, key, message)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockIMessageBroker)(nil).SendMessage), ctx, topic, key, message)
 }

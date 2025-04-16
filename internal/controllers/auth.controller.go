@@ -23,12 +23,15 @@ var (
 )
 
 type AuthController struct {
+	RegistrationService  services.IRegistration
 	AuthService          services.IAuth
 	OAuth2GoogleConfig   *oauth2.Config
 	OAuth2FacebookConfig *oauth2.Config
 }
 
-func NewAuthController(authService services.IAuth,
+func NewAuthController(
+	registrationService services.IRegistration,
+	authService services.IAuth,
 	oAuth2GoogleConfig global.GoogleOAuthConfig,
 	oAuth2FacebookConfig global.FacebookOAuthConfig) *AuthController {
 	return &AuthController{
@@ -48,7 +51,7 @@ func (ac *AuthController) SendRegistrationOtp(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.SendRegistrationOtp(ctx, req)
+	status, err := ac.RegistrationService.SendRegistrationOtp(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -67,7 +70,7 @@ func (ac *AuthController) VerifyRegistrationOtp(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.VerifyRegistrationOtp(ctx, req)
+	status, err := ac.RegistrationService.VerifyRegistrationOtp(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -86,7 +89,7 @@ func (ac *AuthController) CompleteRegistration(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.CompleteRegistration(ctx, req)
+	status, err := ac.RegistrationService.CompleteRegistration(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
