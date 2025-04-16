@@ -10,6 +10,7 @@ import (
 	"user_service/db/sqlc"
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
+	"user_service/internal/implementations/forgot_password"
 	"user_service/internal/implementations/login"
 	"user_service/internal/implementations/registration"
 	"user_service/internal/injectors/provider"
@@ -34,9 +35,10 @@ func InitAuthController() (*controllers.AuthController, error) {
 	}
 	iLogin := login.NewLoginService(iStore, iMaker)
 	iAuth := implementations.NewAuthService(iStore, iMaker, iRedis, iMessageBroker)
+	iForgotPassword := forgotpassword.NewForgotPasswordSevice(iStore, iRedis, iMessageBroker)
 	googleOAuthConfig := provider.ProvideGoogleOAuthConfig()
 	facebookOAuthConfig := provider.ProvideFacebookOAuthConfig()
-	authController := controllers.NewAuthController(iRegistration, iLogin, iAuth, googleOAuthConfig, facebookOAuthConfig)
+	authController := controllers.NewAuthController(iRegistration, iLogin, iAuth, iForgotPassword, googleOAuthConfig, facebookOAuthConfig)
 	return authController, nil
 }
 

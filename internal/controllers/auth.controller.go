@@ -23,25 +23,28 @@ var (
 )
 
 type AuthController struct {
-	RegistrationService  services.IRegistration
-	LoginService         services.ILogin
-	AuthService          services.IAuth
-	OAuth2GoogleConfig   *oauth2.Config
-	OAuth2FacebookConfig *oauth2.Config
+	RegistrationService   services.IRegistration
+	LoginService          services.ILogin
+	AuthService           services.IAuth
+	ForgotPasswordService services.IForgotPassword
+	OAuth2GoogleConfig    *oauth2.Config
+	OAuth2FacebookConfig  *oauth2.Config
 }
 
 func NewAuthController(
 	registrationService services.IRegistration,
 	loginService services.ILogin,
 	authService services.IAuth,
+	forgotPasswordService services.IForgotPassword,
 	oAuth2GoogleConfig global.GoogleOAuthConfig,
 	oAuth2FacebookConfig global.FacebookOAuthConfig) *AuthController {
 	return &AuthController{
-		RegistrationService:  registrationService,
-		LoginService:         loginService,
-		AuthService:          authService,
-		OAuth2GoogleConfig:   oAuth2GoogleConfig,
-		OAuth2FacebookConfig: oAuth2FacebookConfig,
+		RegistrationService:   registrationService,
+		LoginService:          loginService,
+		AuthService:           authService,
+		ForgotPasswordService: forgotPasswordService,
+		OAuth2GoogleConfig:    oAuth2GoogleConfig,
+		OAuth2FacebookConfig:  oAuth2FacebookConfig,
 	}
 }
 
@@ -131,7 +134,7 @@ func (ac *AuthController) SendForgotPasswordOtp(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.SendForgotPasswordOtp(ctx, req)
+	status, err := ac.ForgotPasswordService.SendForgotPasswordOtp(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -150,7 +153,7 @@ func (ac *AuthController) VerifyForgotPasswordOtp(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.VerifyForgotPasswordOtp(ctx, req)
+	status, err := ac.ForgotPasswordService.VerifyForgotPasswordOtp(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -169,7 +172,7 @@ func (ac *AuthController) CompleteForgotPassword(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.CompleteForgotPassword(ctx, req)
+	status, err := ac.ForgotPasswordService.CompleteForgotPassword(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
