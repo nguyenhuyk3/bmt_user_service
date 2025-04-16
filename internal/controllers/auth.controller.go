@@ -25,8 +25,9 @@ var (
 type AuthController struct {
 	RegistrationService   services.IRegistration
 	LoginService          services.ILogin
-	AuthService           services.IAuth
 	ForgotPasswordService services.IForgotPassword
+	OAuth2Service         services.IOAuth2
+	LogoutService         services.ILogout
 	OAuth2GoogleConfig    *oauth2.Config
 	OAuth2FacebookConfig  *oauth2.Config
 }
@@ -34,15 +35,17 @@ type AuthController struct {
 func NewAuthController(
 	registrationService services.IRegistration,
 	loginService services.ILogin,
-	authService services.IAuth,
 	forgotPasswordService services.IForgotPassword,
+	oAuth2Service services.IOAuth2,
+	logoutService services.ILogout,
 	oAuth2GoogleConfig global.GoogleOAuthConfig,
 	oAuth2FacebookConfig global.FacebookOAuthConfig) *AuthController {
 	return &AuthController{
 		RegistrationService:   registrationService,
 		LoginService:          loginService,
-		AuthService:           authService,
 		ForgotPasswordService: forgotPasswordService,
+		OAuth2Service:         oAuth2Service,
+		LogoutService:         logoutService,
 		OAuth2GoogleConfig:    oAuth2GoogleConfig,
 		OAuth2FacebookConfig:  oAuth2FacebookConfig,
 	}
@@ -191,7 +194,7 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	status, err := ac.AuthService.Logout(ctx, email)
+	status, err := ac.LogoutService.Logout(ctx, email)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return
@@ -241,19 +244,19 @@ func (ac *AuthController) GoogleCallback(c *gin.Context) {
 	// * Check if email is in db
 	// * Case 1: If not, add to db and return token
 	// * Case 2: If so, return the token.
-	isExists, err := ac.AuthService.CheckOAuth2UserByEmail(ctx, userInfo.Email)
+	isExists, err := ac.OAuth2Service.CheckOAuth2UserByEmail(ctx, userInfo.Email)
 	if err != nil {
 		responses.FailureResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	if !isExists {
-		status, err := ac.AuthService.InserOAuth2UsertUser(ctx, userInfo)
+		status, err := ac.OAuth2Service.InserOAuth2UsertUser(ctx, userInfo)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return
 		}
 
-		data, status, err := ac.AuthService.ReturnToken(ctx, userInfo.Email)
+		data, status, err := ac.OAuth2Service.ReturnToken(ctx, userInfo.Email)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return
@@ -261,7 +264,7 @@ func (ac *AuthController) GoogleCallback(c *gin.Context) {
 
 		responses.SuccessResponse(c, http.StatusOK, "google login successfully", data)
 	} else {
-		data, status, err := ac.AuthService.ReturnToken(ctx, userInfo.Email)
+		data, status, err := ac.OAuth2Service.ReturnToken(ctx, userInfo.Email)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return
@@ -319,19 +322,19 @@ func (ac *AuthController) FacebookgCallbak(c *gin.Context) {
 		Name:  user["name"].(string),
 	}
 
-	isExists, err := ac.AuthService.CheckOAuth2UserByEmail(ctx, facebookUser.Email)
+	isExists, err := ac.OAuth2Service.CheckOAuth2UserByEmail(ctx, facebookUser.Email)
 	if err != nil {
 		responses.FailureResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	if !isExists {
-		status, err := ac.AuthService.InserOAuth2UsertUser(ctx, facebookUser)
+		status, err := ac.OAuth2Service.InserOAuth2UsertUser(ctx, facebookUser)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return
 		}
 
-		data, status, err := ac.AuthService.ReturnToken(ctx, facebookUser.Email)
+		data, status, err := ac.OAuth2Service.ReturnToken(ctx, facebookUser.Email)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return
@@ -339,7 +342,7 @@ func (ac *AuthController) FacebookgCallbak(c *gin.Context) {
 
 		responses.SuccessResponse(c, http.StatusOK, "facebook login successfully", data)
 	} else {
-		data, status, err := ac.AuthService.ReturnToken(ctx, facebookUser.Email)
+		data, status, err := ac.OAuth2Service.ReturnToken(ctx, facebookUser.Email)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return

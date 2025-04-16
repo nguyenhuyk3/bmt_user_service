@@ -1,4 +1,4 @@
-package implementations
+package oauth2
 
 import (
 	"context"
@@ -10,87 +10,24 @@ import (
 	"user_service/db/sqlc"
 	"user_service/dto/request"
 	"user_service/dto/response"
-	fortests "user_service/for_tests"
 	"user_service/global"
 	"user_service/internal/mocks"
 	"user_service/internal/services"
 	"user_service/utils/token/jwt"
 
-	"github.com/jackc/pgx/v5/pgconn"
+	fortests "user_service/for_tests"
+
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
-func newTestAuthService(
+func newTestOAuth2Service(
 	jwtMaker jwt.IMaker,
 	sqlStore sqlc.IStore,
-	redisClient services.IRedis,
-	messageBroker services.IMessageBroker) services.IAuth {
+) services.IOAuth2 {
 	fortests.LoadConfigsForTests()
 
-	return NewAuthService(sqlStore, jwtMaker, redisClient, messageBroker)
-}
-
-func TestLogout(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockJwt := mocks.NewMockIMaker(ctrl)
-	mockSqlStore := mocks.NewMockIStore(ctrl)
-	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
-
-	email := "test-email@gmail.com"
-
-	testCases := []struct {
-		name           string
-		setUp          func()
-		email          string
-		expectedStatus int
-		expectErr      bool
-	}{
-		{
-			name: "Database error",
-			setUp: func() {
-				mockSqlStore.EXPECT().
-					UpdateAction(gomock.Any(), gomock.Any()).
-					Return(pgconn.CommandTag{}, errors.New("database error"))
-			},
-			email:          email,
-			expectedStatus: http.StatusInternalServerError,
-			expectErr:      true,
-		},
-		{
-			name: "Successful logout",
-			setUp: func() {
-				mockSqlStore.EXPECT().
-					UpdateAction(gomock.Any(), gomock.Any()).
-					Return(pgconn.CommandTag{}, nil)
-			},
-			email:          email,
-			expectedStatus: http.StatusOK,
-			expectErr:      false,
-		},
-	}
-
-	for i := range testCases {
-		tc := testCases[i]
-
-		t.Run(tc.name, func(t *testing.T) {
-			tc.setUp()
-
-			status, err := authService.Logout(context.TODO(), tc.email)
-
-			assert.Equal(t, tc.expectedStatus, status)
-
-			if tc.expectErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+	return NewOAuth2Service(sqlStore, jwtMaker)
 }
 
 func TestInsertGoogleUser(t *testing.T) {
@@ -99,9 +36,7 @@ func TestInsertGoogleUser(t *testing.T) {
 
 	mockJwt := mocks.NewMockIMaker(ctrl)
 	mockSqlStore := mocks.NewMockIStore(ctrl)
-	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
+	oAuthService2 := newTestOAuth2Service(mockJwt, mockSqlStore)
 
 	googleUserInfo := response.OAuth2UserInfo{
 		Id:    "123456789",
@@ -157,7 +92,7 @@ func TestInsertGoogleUser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := authService.InserOAuth2UsertUser(context.TODO(), tc.userInfo)
+			status, err := oAuthService2.InserOAuth2UsertUser(context.TODO(), tc.userInfo)
 
 			assert.Equal(t, tc.expectedStatus, status)
 
@@ -177,9 +112,7 @@ func TestCheckGoogleUserByEmail(t *testing.T) {
 
 	mockJwt := mocks.NewMockIMaker(ctrl)
 	mockSqlStore := mocks.NewMockIStore(ctrl)
-	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
+	oAuthService2 := newTestOAuth2Service(mockJwt, mockSqlStore)
 
 	email := "test-email@gmail.com"
 
@@ -231,7 +164,7 @@ func TestCheckGoogleUserByEmail(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			exists, err := authService.CheckOAuth2UserByEmail(context.TODO(), tc.email)
+			exists, err := oAuthService2.CheckOAuth2UserByEmail(context.TODO(), tc.email)
 
 			assert.Equal(t, tc.expectedExist, exists)
 
@@ -255,10 +188,7 @@ func TestReturnToken(t *testing.T) {
 
 	mockJwt := mocks.NewMockIMaker(ctrl)
 	mockSqlStore := mocks.NewMockIStore(ctrl)
-	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockJwt, mockSqlStore, mockRedis, mockBroker)
-
+	oAuthService2 := newTestOAuth2Service(mockJwt, mockSqlStore)
 	email := "test-email@gmail.com"
 	accessToken := "mock-access-token"
 	refreshToken := "mock-refresh-token"
@@ -323,7 +253,7 @@ func TestReturnToken(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			loginRes, status, err := authService.ReturnToken(context.TODO(), tc.email)
+			loginRes, status, err := oAuthService2.ReturnToken(context.TODO(), tc.email)
 
 			assert.Equal(t, tc.expectedStatus, status)
 

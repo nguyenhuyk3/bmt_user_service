@@ -23,7 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func newTestAuthService(
+func newTestLoginService(
 	jwtMaker jwt.IMaker,
 	sqlStore sqlc.IStore,
 ) services.ILogin {
@@ -39,7 +39,7 @@ func TestLogin(t *testing.T) {
 	mockJwt := mocks.NewMockIMaker(ctrl)
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 
-	service := newTestAuthService(mockJwt, mockSqlStore)
+	loginService := newTestLoginService(mockJwt, mockSqlStore)
 
 	password, err := generator.GenerateStringNumberBasedOnLength(18)
 	require.NoError(t, err)
@@ -206,7 +206,7 @@ func TestLogin(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			res, status, err := service.Login(context.TODO(), tc.request)
+			res, status, err := loginService.Login(context.TODO(), tc.request)
 
 			assert.Equal(t, tc.expectedStatus, status)
 

@@ -38,7 +38,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	service := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
+	forgotPasswordService := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
 	aesEncryptedEmail, _ := cryptor.AesEncrypt(email)
@@ -235,7 +235,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := service.SendForgotPasswordOtp(context.TODO(), tc.request)
+			status, err := forgotPasswordService.SendForgotPasswordOtp(context.TODO(), tc.request)
 
 			assert.Equal(t, tc.expectedStatus, status)
 
@@ -255,7 +255,7 @@ func TestVerifyForgotPasswordOtp(t *testing.T) {
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	serivce := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
+	forgotPasswordService := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
 	otp, _ := generator.GenerateStringNumberBasedOnLength(6)
@@ -364,7 +364,7 @@ func TestVerifyForgotPasswordOtp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := serivce.VerifyForgotPasswordOtp(context.TODO(), tc.request)
+			status, err := forgotPasswordService.VerifyForgotPasswordOtp(context.TODO(), tc.request)
 
 			assert.Equal(t, tc.expectedStatus, status)
 
@@ -384,7 +384,7 @@ func TestCompleteForgotPassword(t *testing.T) {
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	serivce := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
+	forgotPasswordService := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
 	newPassword := "NewSecurePassword123!"
@@ -520,7 +520,7 @@ func TestCompleteForgotPassword(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := serivce.CompleteForgotPassword(context.TODO(), tc.request)
+			status, err := forgotPasswordService.CompleteForgotPassword(context.TODO(), tc.request)
 
 			assert.Equal(t, tc.expectedStatus, status)
 

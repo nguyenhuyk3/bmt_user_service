@@ -28,13 +28,8 @@ type ILogout interface {
 	Logout(ctx context.Context, email string) (int, error)
 }
 
-type IOAuth2Login interface {
+type IOAuth2 interface {
 	CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error)
 	InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error)
 	ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error)
-}
-
-type IAuth interface {
-	IOAuth2Login
-	ILogout
 }

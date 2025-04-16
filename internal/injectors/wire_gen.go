@@ -12,6 +12,8 @@ import (
 	"user_service/internal/implementations"
 	"user_service/internal/implementations/forgot_password"
 	"user_service/internal/implementations/login"
+	"user_service/internal/implementations/logout"
+	"user_service/internal/implementations/oauth2"
 	"user_service/internal/implementations/registration"
 	"user_service/internal/injectors/provider"
 	"user_service/internal/message_broker"
@@ -34,11 +36,12 @@ func InitAuthController() (*controllers.AuthController, error) {
 		return nil, err
 	}
 	iLogin := login.NewLoginService(iStore, iMaker)
-	iAuth := implementations.NewAuthService(iStore, iMaker, iRedis, iMessageBroker)
 	iForgotPassword := forgotpassword.NewForgotPasswordSevice(iStore, iRedis, iMessageBroker)
+	ioAuth2 := oauth2.NewOAuth2Service(iStore, iMaker)
+	iLogout := logout.NewLogoutService(iStore)
 	googleOAuthConfig := provider.ProvideGoogleOAuthConfig()
 	facebookOAuthConfig := provider.ProvideFacebookOAuthConfig()
-	authController := controllers.NewAuthController(iRegistration, iLogin, iAuth, iForgotPassword, googleOAuthConfig, facebookOAuthConfig)
+	authController := controllers.NewAuthController(iRegistration, iLogin, iForgotPassword, ioAuth2, iLogout, googleOAuthConfig, facebookOAuthConfig)
 	return authController, nil
 }
 
