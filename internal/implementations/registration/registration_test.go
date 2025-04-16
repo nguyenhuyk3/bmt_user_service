@@ -37,7 +37,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
+	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
 	encryptedAesEmail, err := cryptor.AesEncrypt(email)
@@ -136,7 +136,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := authService.SendRegistrationOtp(context.TODO(), request.SendOtpReq{
+			status, err := service.SendRegistrationOtp(context.TODO(), request.SendOtpReq{
 				Email: email,
 			})
 
@@ -157,7 +157,7 @@ func TestVerifyRegistrationOtp(t *testing.T) {
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
+	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
 
@@ -254,7 +254,7 @@ func TestVerifyRegistrationOtp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := authService.VerifyRegistrationOtp(context.TODO(), request.VerifyOtpReq{
+			status, err := service.VerifyRegistrationOtp(context.TODO(), request.VerifyOtpReq{
 				Email: email,
 				Otp:   otp,
 			})
@@ -276,7 +276,7 @@ func TestCompleteRegistration(t *testing.T) {
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
 	mockBroker := mocks.NewMockIMessageBroker(ctrl)
-	authService := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
+	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
 
@@ -380,7 +380,7 @@ func TestCompleteRegistration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := authService.CompleteRegistration(context.TODO(), registrationReq)
+			status, err := service.CompleteRegistration(context.TODO(), registrationReq)
 
 			assert.Equal(t, tc.expectedStatus, status)
 			if tc.expectErr {

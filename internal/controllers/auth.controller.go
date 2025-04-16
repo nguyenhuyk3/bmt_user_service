@@ -24,6 +24,7 @@ var (
 
 type AuthController struct {
 	RegistrationService  services.IRegistration
+	LoginService         services.ILogin
 	AuthService          services.IAuth
 	OAuth2GoogleConfig   *oauth2.Config
 	OAuth2FacebookConfig *oauth2.Config
@@ -31,10 +32,13 @@ type AuthController struct {
 
 func NewAuthController(
 	registrationService services.IRegistration,
+	loginService services.ILogin,
 	authService services.IAuth,
 	oAuth2GoogleConfig global.GoogleOAuthConfig,
 	oAuth2FacebookConfig global.FacebookOAuthConfig) *AuthController {
 	return &AuthController{
+		RegistrationService:  registrationService,
+		LoginService:         loginService,
 		AuthService:          authService,
 		OAuth2GoogleConfig:   oAuth2GoogleConfig,
 		OAuth2FacebookConfig: oAuth2FacebookConfig,
@@ -108,7 +112,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 
-	data, status, err := ac.AuthService.Login(ctx, req)
+	data, status, err := ac.LoginService.Login(ctx, req)
 	if err != nil {
 		responses.FailureResponse(c, status, err.Error())
 		return

@@ -5,6 +5,7 @@ package injectors
 import (
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
+	"user_service/internal/implementations/login"
 	"user_service/internal/implementations/registration"
 	"user_service/internal/injectors/provider"
 
@@ -19,6 +20,7 @@ func InitAuthController() (*controllers.AuthController, error) {
 		kafkaSet,
 		implementations.NewAuthService,
 		registration.NewRegistrationService,
+		login.NewLoginService,
 
 		provider.ProvideGoogleOAuthConfig,
 		provider.ProvideFacebookOAuthConfig,

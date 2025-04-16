@@ -2,7 +2,6 @@ package implementations
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -45,54 +44,6 @@ const (
 	three_minutes = 3
 	three_hours   = 3 * 60
 )
-
-// Login implements services.IAuthUser.
-func (a *authService) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
-	var result response.LoginRes
-
-	user, err := a.SqlStore.GetUserByEmail(ctx, arg.Email)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return response.LoginRes{}, http.StatusNotFound, errors.New("user not found")
-		}
-
-		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to fetch user: %w", err)
-	}
-
-	isMatch := cryptor.BcryptCheckInput(user.Password, arg.Password)
-	if isMatch != nil {
-		return response.LoginRes{}, http.StatusUnauthorized, errors.New("password does not match")
-	}
-
-	accessToken, accessPayload, err := a.JwtMaker.CreateAccessToken(user.Email, string(user.Role.Roles))
-	if err != nil {
-		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to create access token: %w", err)
-	}
-	result.AccessToken = accessToken
-	result.AccessPayload = accessPayload
-
-	refreshToken, _, err := a.JwtMaker.CreateRefreshToken(user.Email, string(user.Role.Roles))
-	if err != nil {
-		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to create refresh token: %w", err)
-	}
-	result.RefreshToken = refreshToken
-
-	_, err = a.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
-		Email: user.Email,
-		LoginAt: pgtype.Timestamptz{
-			Time:  time.Now(),
-			Valid: true,
-		},
-		LogoutAt: pgtype.Timestamptz{
-			Valid: false,
-		},
-	})
-	if err != nil {
-		return response.LoginRes{}, http.StatusInternalServerError, fmt.Errorf("failed to update user action: %w", err)
-	}
-
-	return result, http.StatusOK, nil
-}
 
 /*
 * SendForgotPasswordOtp will include 6 steps:

@@ -10,6 +10,7 @@ import (
 	"user_service/db/sqlc"
 	"user_service/internal/controllers"
 	"user_service/internal/implementations"
+	"user_service/internal/implementations/login"
 	"user_service/internal/implementations/registration"
 	"user_service/internal/injectors/provider"
 	"user_service/internal/message_broker"
@@ -31,10 +32,11 @@ func InitAuthController() (*controllers.AuthController, error) {
 	if err != nil {
 		return nil, err
 	}
+	iLogin := login.NewLoginService(iStore, iMaker)
 	iAuth := implementations.NewAuthService(iStore, iMaker, iRedis, iMessageBroker)
 	googleOAuthConfig := provider.ProvideGoogleOAuthConfig()
 	facebookOAuthConfig := provider.ProvideFacebookOAuthConfig()
-	authController := controllers.NewAuthController(iRegistration, iAuth, googleOAuthConfig, facebookOAuthConfig)
+	authController := controllers.NewAuthController(iRegistration, iLogin, iAuth, googleOAuthConfig, facebookOAuthConfig)
 	return authController, nil
 }
 
