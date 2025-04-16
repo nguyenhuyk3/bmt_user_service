@@ -9,7 +9,7 @@ package injectors
 import (
 	"user_service/db/sqlc"
 	"user_service/internal/controllers"
-	"user_service/internal/implementations"
+	"user_service/internal/implementations/customer"
 	"user_service/internal/implementations/forgot_password"
 	"user_service/internal/implementations/login"
 	"user_service/internal/implementations/logout"
@@ -63,7 +63,7 @@ func InitAuthMiddleware() (*middlewares.AuthMiddleware, error) {
 func InitCustomerController() (*controllers.CustomerController, error) {
 	pool := provider.ProvidePgxPool()
 	iStore := sqlc.NewStore(pool)
-	iCustomer := implementations.NewCustomerService(iStore)
+	iCustomer := customer.NewCustomerService(iStore)
 	customerController := controllers.NewCustomerController(iCustomer)
 	return customerController, nil
 }

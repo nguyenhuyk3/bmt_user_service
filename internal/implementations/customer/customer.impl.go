@@ -1,4 +1,4 @@
-package implementations
+package customer
 
 import (
 	"context"

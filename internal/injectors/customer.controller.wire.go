@@ -4,7 +4,7 @@ package injectors
 
 import (
 	"user_service/internal/controllers"
-	"user_service/internal/implementations"
+	"user_service/internal/implementations/customer"
 
 	"github.com/google/wire"
 )
@@ -12,7 +12,7 @@ import (
 func InitCustomerController() (*controllers.CustomerController, error) {
 	wire.Build(
 		dbSet,
-		implementations.NewCustomerService,
+		customer.NewCustomerService,
 		controllers.NewCustomerController,
 	)
 

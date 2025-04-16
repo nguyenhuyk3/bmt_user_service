@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	google_o_auth_state_string   = ""
-	facebook_o_auth_state_string = ""
+	google_oauth2_state_string   = "oauth2_google_state"
+	facebook_oauth2_state_string = "oauth2_facebook_state"
 )
 
 type AuthController struct {
@@ -204,16 +204,25 @@ func (ac *AuthController) Logout(c *gin.Context) {
 }
 
 func (ac *AuthController) GoogleLogin(c *gin.Context) {
-	google_o_auth_state_string, _ = generator.GenerateStringNumberBasedOnLength(24)
-	url := ac.OAuth2GoogleConfig.AuthCodeURL(google_o_auth_state_string)
+	state, _ := generator.GenerateStringNumberBasedOnLength(24)
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     google_oauth2_state_string,
+		Value:    state,
+		Expires:  time.Now().Add(5 * time.Minute),
+		HttpOnly: true,
+	})
+
+	url := ac.OAuth2GoogleConfig.AuthCodeURL(state)
 
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func (ac *AuthController) GoogleCallback(c *gin.Context) {
 	state := c.Query("state")
-	if state != google_o_auth_state_string {
-		responses.FailureResponse(c, http.StatusUnauthorized, fmt.Sprintf("state is invalid, expect %s and receive %s", google_o_auth_state_string, state))
+	cookie, err := c.Request.Cookie(google_oauth2_state_string)
+	if err != nil || cookie.Value != state {
+		responses.FailureResponse(c, http.StatusUnauthorized, "invalid google oauth state")
 		return
 	}
 
@@ -275,16 +284,25 @@ func (ac *AuthController) GoogleCallback(c *gin.Context) {
 }
 
 func (ac *AuthController) FacebookLogin(c *gin.Context) {
-	facebook_o_auth_state_string, _ = generator.GenerateStringNumberBasedOnLength(24)
-	url := ac.OAuth2FacebookConfig.AuthCodeURL(facebook_o_auth_state_string)
+	state, _ := generator.GenerateStringNumberBasedOnLength(24)
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     facebook_oauth2_state_string,
+		Value:    state,
+		Expires:  time.Now().Add(5 * time.Minute),
+		HttpOnly: true,
+	})
+
+	url := ac.OAuth2FacebookConfig.AuthCodeURL(state)
 
 	c.Redirect(http.StatusTemporaryRedirect, url)
 }
 
 func (ac *AuthController) FacebookgCallbak(c *gin.Context) {
 	state := c.Query("state")
-	if state != facebook_o_auth_state_string {
-		responses.FailureResponse(c, http.StatusUnauthorized, fmt.Sprintf("state is invalid, expect %s and receive %s", google_o_auth_state_string, state))
+	cookie, err := c.Request.Cookie(facebook_oauth2_state_string)
+	if err != nil || cookie.Value != state {
+		responses.FailureResponse(c, http.StatusUnauthorized, "invalid facebook oauth state")
 		return
 	}
 
