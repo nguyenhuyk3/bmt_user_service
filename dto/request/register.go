@@ -25,3 +25,14 @@ type CompleteRegistrationReq struct {
 	Account Account `json:"account" binding:"required"`
 	Info    Info    `json:"info" binding:"required"`
 }
+
+type AdminAccount struct {
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+type CreateAdminAccountReq struct {
+	Key          string       `json:"key" binding:"required"`
+	AdminAccount AdminAccount `json:"admin_account" binding:"required"`
+	Info         Info         `json:"info" binding:"required"`
+}

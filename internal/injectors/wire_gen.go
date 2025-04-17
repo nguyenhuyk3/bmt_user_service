@@ -9,6 +9,7 @@ package injectors
 import (
 	"user_service/db/sqlc"
 	"user_service/internal/controllers"
+	"user_service/internal/implementations/admin"
 	"user_service/internal/implementations/customer"
 	"user_service/internal/implementations/forgot_password"
 	"user_service/internal/implementations/login"
@@ -21,6 +22,16 @@ import (
 	"user_service/utils/redis"
 	"user_service/utils/token/jwt"
 )
+
+// Injectors from admin.controller.wire.go:
+
+func InitAdminController() (*controllers.AdminController, error) {
+	pool := provider.ProvidePgxPool()
+	iStore := sqlc.NewStore(pool)
+	iAdmin := admin.NewAdminService(iStore)
+	adminController := controllers.NewAdminController(iAdmin)
+	return adminController, nil
+}
 
 // Injectors from auth.controller.wire.go:
 

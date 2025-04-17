@@ -22,6 +22,7 @@ type serverSetting struct {
 	LengthOfSalt int    `mapstructure:"LENGTH_OF_SALT"`
 	Issuer       string `mapstructure:"ISS"`
 	FixedIv      string `mapstructure:"FIXED_IV"`
+	KeyForAdmin  string `mapstructure:"KEY_FOR_ADMIN"`
 }
 
 type postgreSetting struct {

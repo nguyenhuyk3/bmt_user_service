@@ -13,6 +13,7 @@ func initRouter() *gin.Engine {
 	// Routers
 	authRouter := routers.UserServiceRouterGroup.Auth
 	customerRouter := routers.UserServiceRouterGroup.Customer
+	adminRouter := routers.UserServiceRouterGroup.Admin
 	// Middlewares
 	authMiddleware, err := injectors.InitAuthMiddleware()
 	if err != nil {
@@ -23,6 +24,7 @@ func initRouter() *gin.Engine {
 	{
 		authRouter.InitAuthRouter(mainGroup, authMiddleware)
 		customerRouter.InitCustomerRouter(mainGroup, authMiddleware)
+		adminRouter.InitCustomerRouter(mainGroup, authMiddleware)
 	}
 
 	return r
