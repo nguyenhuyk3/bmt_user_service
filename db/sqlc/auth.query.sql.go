@@ -12,21 +12,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const checkAccountExistsByEmail = `-- name: CheckAccountExistsByEmail :one
+const checkAccountExistsByEmailAndSource = `-- name: CheckAccountExistsByEmailAndSource :one
 SELECT EXISTS(
-    SELECT 1 FROM accounts WHERE email = $1
+    SELECT 1 FROM accounts WHERE email = $1 AND source = $2
 ) AS exists
 `
 
-func (q *Queries) CheckAccountExistsByEmail(ctx context.Context, email string) (bool, error) {
-	row := q.db.QueryRow(ctx, checkAccountExistsByEmail, email)
+type CheckAccountExistsByEmailAndSourceParams struct {
+	Email  string      `json:"email"`
+	Source NullSources `json:"source"`
+}
+
+func (q *Queries) CheckAccountExistsByEmailAndSource(ctx context.Context, arg CheckAccountExistsByEmailAndSourceParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkAccountExistsByEmailAndSource, arg.Email, arg.Source)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT email, password, role
+SELECT email, password, source, role
 FROM accounts
 WHERE email = $1
 `
@@ -34,7 +39,12 @@ WHERE email = $1
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (Accounts, error) {
 	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i Accounts
-	err := row.Scan(&i.Email, &i.Password, &i.Role)
+	err := row.Scan(
+		&i.Email,
+		&i.Password,
+		&i.Source,
+		&i.Role,
+	)
 	return i, err
 }
 
@@ -96,25 +106,6 @@ func (q *Queries) InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) 
 	return err
 }
 
-const updateAction = `-- name: UpdateAction :execresult
-UPDATE "user_actions"
-SET 
-    login_at = CASE WHEN $1::timestamptz IS NOT NULL THEN $1::timestamptz ELSE login_at END,
-    logout_at = CASE WHEN $2::timestamptz IS NOT NULL THEN $2::timestamptz ELSE logout_at END,
-    updated_at = now()
-WHERE email = $3::text
-`
-
-type UpdateActionParams struct {
-	LoginAt  pgtype.Timestamptz `json:"login_at"`
-	LogoutAt pgtype.Timestamptz `json:"logout_at"`
-	Email    string             `json:"email"`
-}
-
-func (q *Queries) UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error) {
-	return q.db.Exec(ctx, updateAction, arg.LoginAt, arg.LogoutAt, arg.Email)
-}
-
 const updatePassword = `-- name: UpdatePassword :exec
 UPDATE "accounts"
 SET 
@@ -130,4 +121,29 @@ type UpdatePasswordParams struct {
 func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
 	_, err := q.db.Exec(ctx, updatePassword, arg.Password, arg.Email)
 	return err
+}
+
+const updateUserAction = `-- name: UpdateUserAction :execresult
+UPDATE "user_actions"
+SET 
+    login_at = CASE WHEN $1::timestamptz IS NOT NULL THEN $1::timestamptz ELSE login_at END,
+    logout_at = CASE WHEN $2::timestamptz IS NOT NULL THEN $2::timestamptz ELSE logout_at END,
+    updated_at = CASE WHEN $3::timestamptz IS NOT NULL THEN $3::timestamptz ELSE updated_at END
+WHERE email = $4::text
+`
+
+type UpdateUserActionParams struct {
+	LoginAt   pgtype.Timestamptz `json:"login_at"`
+	LogoutAt  pgtype.Timestamptz `json:"logout_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	Email     string             `json:"email"`
+}
+
+func (q *Queries) UpdateUserAction(ctx context.Context, arg UpdateUserActionParams) (pgconn.CommandTag, error) {
+	return q.db.Exec(ctx, updateUserAction,
+		arg.LoginAt,
+		arg.LogoutAt,
+		arg.UpdatedAt,
+		arg.Email,
+	)
 }

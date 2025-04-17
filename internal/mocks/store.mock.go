@@ -44,19 +44,19 @@ func (m *MockIStore) EXPECT() *MockIStoreMockRecorder {
 	return m.recorder
 }
 
-// CheckAccountExistsByEmail mocks base method.
-func (m *MockIStore) CheckAccountExistsByEmail(ctx context.Context, email string) (bool, error) {
+// CheckAccountExistsByEmailAndSource mocks base method.
+func (m *MockIStore) CheckAccountExistsByEmailAndSource(ctx context.Context, arg sqlc.CheckAccountExistsByEmailAndSourceParams) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckAccountExistsByEmail", ctx, email)
+	ret := m.ctrl.Call(m, "CheckAccountExistsByEmailAndSource", ctx, arg)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CheckAccountExistsByEmail indicates an expected call of CheckAccountExistsByEmail.
-func (mr *MockIStoreMockRecorder) CheckAccountExistsByEmail(ctx, email any) *gomock.Call {
+// CheckAccountExistsByEmailAndSource indicates an expected call of CheckAccountExistsByEmailAndSource.
+func (mr *MockIStoreMockRecorder) CheckAccountExistsByEmailAndSource(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAccountExistsByEmail", reflect.TypeOf((*MockIStore)(nil).CheckAccountExistsByEmail), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckAccountExistsByEmailAndSource", reflect.TypeOf((*MockIStore)(nil).CheckAccountExistsByEmailAndSource), ctx, arg)
 }
 
 // GetInforByEmail mocks base method.
@@ -159,19 +159,18 @@ func (mr *MockIStoreMockRecorder) InsertUserInfo(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertUserInfo", reflect.TypeOf((*MockIStore)(nil).InsertUserInfo), ctx, arg)
 }
 
-// UpdateAction mocks base method.
-func (m *MockIStore) UpdateAction(ctx context.Context, arg sqlc.UpdateActionParams) (pgconn.CommandTag, error) {
+// UpdateInforByEmail mocks base method.
+func (m *MockIStore) UpdateInforByEmail(ctx context.Context, arg sqlc.UpdateInforByEmailParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAction", ctx, arg)
-	ret0, _ := ret[0].(pgconn.CommandTag)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "UpdateInforByEmail", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
-// UpdateAction indicates an expected call of UpdateAction.
-func (mr *MockIStoreMockRecorder) UpdateAction(ctx, arg any) *gomock.Call {
+// UpdateInforByEmail indicates an expected call of UpdateInforByEmail.
+func (mr *MockIStoreMockRecorder) UpdateInforByEmail(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAction", reflect.TypeOf((*MockIStore)(nil).UpdateAction), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateInforByEmail", reflect.TypeOf((*MockIStore)(nil).UpdateInforByEmail), ctx, arg)
 }
 
 // UpdatePassword mocks base method.
@@ -186,4 +185,33 @@ func (m *MockIStore) UpdatePassword(ctx context.Context, arg sqlc.UpdatePassword
 func (mr *MockIStoreMockRecorder) UpdatePassword(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePassword", reflect.TypeOf((*MockIStore)(nil).UpdatePassword), ctx, arg)
+}
+
+// UpdateUserAction mocks base method.
+func (m *MockIStore) UpdateUserAction(ctx context.Context, arg sqlc.UpdateUserActionParams) (pgconn.CommandTag, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserAction", ctx, arg)
+	ret0, _ := ret[0].(pgconn.CommandTag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateUserAction indicates an expected call of UpdateUserAction.
+func (mr *MockIStoreMockRecorder) UpdateUserAction(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserAction", reflect.TypeOf((*MockIStore)(nil).UpdateUserAction), ctx, arg)
+}
+
+// UpdateUserInforTran mocks base method.
+func (m *MockIStore) UpdateUserInforTran(ctx context.Context, arg request.ChangeInforReq) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUserInforTran", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateUserInforTran indicates an expected call of UpdateUserInforTran.
+func (mr *MockIStoreMockRecorder) UpdateUserInforTran(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserInforTran", reflect.TypeOf((*MockIStore)(nil).UpdateUserInforTran), ctx, arg)
 }

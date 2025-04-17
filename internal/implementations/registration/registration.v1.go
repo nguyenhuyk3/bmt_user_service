@@ -51,7 +51,12 @@ func (r *registrationService) SendRegistrationOtp(ctx context.Context, arg reque
 	if isExists {
 		return http.StatusConflict, errors.New("email is in complete registration process")
 	}
-	isExists, err := r.SqlStore.CheckAccountExistsByEmail(ctx, arg.Email)
+
+	isExists, err := r.SqlStore.CheckAccountExistsByEmailAndSource(ctx,
+		sqlc.CheckAccountExistsByEmailAndSourceParams{Email: arg.Email, Source: sqlc.NullSources{
+			Sources: sqlc.SourcesApp,
+			Valid:   true,
+		}})
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
 	}

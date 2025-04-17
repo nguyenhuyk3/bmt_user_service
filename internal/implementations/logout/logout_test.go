@@ -44,7 +44,7 @@ func TestLogout(t *testing.T) {
 			name: "Database error",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					UpdateAction(gomock.Any(), gomock.Any()).
+					UpdateUserAction(gomock.Any(), gomock.Any()).
 					Return(pgconn.CommandTag{}, errors.New("database error"))
 			},
 			email:          email,
@@ -55,7 +55,7 @@ func TestLogout(t *testing.T) {
 			name: "Successful logout",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					UpdateAction(gomock.Any(), gomock.Any()).
+					UpdateUserAction(gomock.Any(), gomock.Any()).
 					Return(pgconn.CommandTag{}, nil)
 			},
 			email:          email,

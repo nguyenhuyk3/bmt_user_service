@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	google_oauth2_state_string   = "oauth2_google_state"
-	facebook_oauth2_state_string = "oauth2_facebook_state"
+	google_oauth2_state   = "google_oauth2_state"
+	facebook_oauth2_state = "facebook_oauth2_state"
 )
 
 type AuthController struct {
@@ -207,7 +207,7 @@ func (ac *AuthController) GoogleLogin(c *gin.Context) {
 	state, _ := generator.GenerateStringNumberBasedOnLength(24)
 
 	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     google_oauth2_state_string,
+		Name:     google_oauth2_state,
 		Value:    state,
 		Expires:  time.Now().Add(5 * time.Minute),
 		HttpOnly: true,
@@ -220,7 +220,7 @@ func (ac *AuthController) GoogleLogin(c *gin.Context) {
 
 func (ac *AuthController) GoogleCallback(c *gin.Context) {
 	state := c.Query("state")
-	cookie, err := c.Request.Cookie(google_oauth2_state_string)
+	cookie, err := c.Request.Cookie(google_oauth2_state)
 	if err != nil || cookie.Value != state {
 		responses.FailureResponse(c, http.StatusUnauthorized, "invalid google oauth state")
 		return
@@ -253,13 +253,16 @@ func (ac *AuthController) GoogleCallback(c *gin.Context) {
 	// * Check if email is in db
 	// * Case 1: If not, add to db and return token
 	// * Case 2: If so, return the token.
-	isExists, err := ac.OAuth2Service.CheckOAuth2UserByEmail(ctx, userInfo.Email)
+	isExists, err := ac.OAuth2Service.CheckOAuth2UserByEmail(ctx,
+		request.EmailAndSource{
+			Email:  userInfo.Email,
+			Source: "google"})
 	if err != nil {
 		responses.FailureResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	if !isExists {
-		status, err := ac.OAuth2Service.InserOAuth2UsertUser(ctx, userInfo)
+		status, err := ac.OAuth2Service.InserOAuth2User(ctx, userInfo)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return
@@ -287,7 +290,7 @@ func (ac *AuthController) FacebookLogin(c *gin.Context) {
 	state, _ := generator.GenerateStringNumberBasedOnLength(24)
 
 	http.SetCookie(c.Writer, &http.Cookie{
-		Name:     facebook_oauth2_state_string,
+		Name:     facebook_oauth2_state,
 		Value:    state,
 		Expires:  time.Now().Add(5 * time.Minute),
 		HttpOnly: true,
@@ -300,7 +303,7 @@ func (ac *AuthController) FacebookLogin(c *gin.Context) {
 
 func (ac *AuthController) FacebookgCallbak(c *gin.Context) {
 	state := c.Query("state")
-	cookie, err := c.Request.Cookie(facebook_oauth2_state_string)
+	cookie, err := c.Request.Cookie(facebook_oauth2_state)
 	if err != nil || cookie.Value != state {
 		responses.FailureResponse(c, http.StatusUnauthorized, "invalid facebook oauth state")
 		return
@@ -340,13 +343,16 @@ func (ac *AuthController) FacebookgCallbak(c *gin.Context) {
 		Name:  user["name"].(string),
 	}
 
-	isExists, err := ac.OAuth2Service.CheckOAuth2UserByEmail(ctx, facebookUser.Email)
+	isExists, err := ac.OAuth2Service.CheckOAuth2UserByEmail(ctx, request.EmailAndSource{
+		Email:  facebookUser.Email,
+		Source: "facebook",
+	})
 	if err != nil {
 		responses.FailureResponse(c, http.StatusInternalServerError, err.Error())
 		return
 	}
 	if !isExists {
-		status, err := ac.OAuth2Service.InserOAuth2UsertUser(ctx, facebookUser)
+		status, err := ac.OAuth2Service.InserOAuth2User(ctx, facebookUser)
 		if err != nil {
 			responses.FailureResponse(c, status, err.Error())
 			return

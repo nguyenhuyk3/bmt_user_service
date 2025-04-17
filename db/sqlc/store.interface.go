@@ -10,4 +10,5 @@ import (
 type IStore interface {
 	Querier
 	InsertAccountTran(ctx context.Context, arg request.CompleteRegistrationReq, isFromOAuth2 bool) error
+	UpdateUserInforTran(ctx context.Context, arg request.ChangeInforReq) error
 }

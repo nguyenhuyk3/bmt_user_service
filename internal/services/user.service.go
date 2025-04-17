@@ -8,4 +8,5 @@ import (
 
 type IUser interface {
 	GetInfor(ctx context.Context, arg request.GetInforReq) (response.GetInfoRes, int, error)
+	UpdateUserInfor(ctx context.Context, arg request.ChangeInforReq) (int, error)
 }

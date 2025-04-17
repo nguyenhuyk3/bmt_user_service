@@ -30,7 +30,7 @@ func newTestOAuth2Service(
 	return NewOAuth2Service(sqlStore, jwtMaker)
 }
 
-func TestInsertGoogleUser(t *testing.T) {
+func TestInsertOAuthUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -92,7 +92,7 @@ func TestInsertGoogleUser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			status, err := oAuthService2.InserOAuth2UsertUser(context.TODO(), tc.userInfo)
+			status, err := oAuthService2.InserOAuth2User(context.TODO(), tc.userInfo)
 
 			assert.Equal(t, tc.expectedStatus, status)
 
@@ -106,7 +106,7 @@ func TestInsertGoogleUser(t *testing.T) {
 	}
 }
 
-func TestCheckGoogleUserByEmail(t *testing.T) {
+func TestCheckOAuthUserByEmail(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -115,44 +115,62 @@ func TestCheckGoogleUserByEmail(t *testing.T) {
 	oAuthService2 := newTestOAuth2Service(mockJwt, mockSqlStore)
 
 	email := "test-email@gmail.com"
+	source := "google"
+
+	arg := sqlc.CheckAccountExistsByEmailAndSourceParams{
+		Email: email,
+		Source: sqlc.NullSources{
+			Sources: sqlc.SourcesGoogle,
+			Valid:   true,
+		},
+	}
+
+	// Create the request param that will be passed to CheckOAuth2UserByEmail
+	requestParam := request.EmailAndSource{
+		Email:  email,
+		Source: source,
+	}
 
 	testCases := []struct {
 		name          string
 		setUp         func()
-		email         string
+		requestParam  request.EmailAndSource
 		expectedExist bool
 		expectErr     bool
+		errorMsg      string
 	}{
 		{
-			name: "Database error",
+			name: "Database error with google user",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, errors.New("database error"))
 			},
-			email:         email,
+			requestParam:  requestParam,
 			expectedExist: false,
 			expectErr:     true,
+			errorMsg:      "an error occur when querying to db",
 		},
 		{
 			name: "Email already exists",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 			},
-			email:         email,
+			requestParam:  requestParam,
 			expectedExist: true,
 			expectErr:     true,
+			errorMsg:      "this email has been registered",
 		},
 		{
 			name: "Email does not exist",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, nil)
 			},
-			email:         email,
+			requestParam:  requestParam,
 			expectedExist: false,
 			expectErr:     false,
 		},
@@ -164,17 +182,13 @@ func TestCheckGoogleUserByEmail(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.setUp()
 
-			exists, err := oAuthService2.CheckOAuth2UserByEmail(context.TODO(), tc.email)
+			exists, err := oAuthService2.CheckOAuth2UserByEmail(context.TODO(), tc.requestParam)
 
 			assert.Equal(t, tc.expectedExist, exists)
 
 			if tc.expectErr {
 				assert.Error(t, err)
-				if tc.expectedExist {
-					assert.Contains(t, err.Error(), "this email has been registered")
-				} else {
-					assert.Contains(t, err.Error(), "an error occur when querying to db")
-				}
+				assert.Contains(t, err.Error(), tc.errorMsg)
 			} else {
 				assert.NoError(t, err)
 			}

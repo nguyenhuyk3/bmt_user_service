@@ -1,6 +1,6 @@
--- name: CheckAccountExistsByEmail :one
+-- name: CheckAccountExistsByEmailAndSource :one
 SELECT EXISTS(
-    SELECT 1 FROM accounts WHERE email = $1
+    SELECT 1 FROM accounts WHERE email = $1 AND source = $2
 ) AS exists;
 
 -- name: InsertAccount :exec
@@ -25,12 +25,12 @@ SELECT *
 FROM accounts
 WHERE email = $1;
 
--- name: UpdateAction :execresult
+-- name: UpdateUserAction :execresult
 UPDATE "user_actions"
 SET 
     login_at = CASE WHEN @login_at::timestamptz IS NOT NULL THEN @login_at::timestamptz ELSE login_at END,
     logout_at = CASE WHEN @logout_at::timestamptz IS NOT NULL THEN @logout_at::timestamptz ELSE logout_at END,
-    updated_at = now()
+    updated_at = CASE WHEN @updated_at::timestamptz IS NOT NULL THEN @updated_at::timestamptz ELSE updated_at END
 WHERE email = @email::text;
 
 -- name: UpdatePassword :exec 

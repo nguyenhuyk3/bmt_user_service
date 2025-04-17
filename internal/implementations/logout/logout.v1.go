@@ -25,7 +25,7 @@ func NewLogoutService(
 
 // Logout implements services.IAuth.
 func (l *logoutService) Logout(ctx context.Context, email string) (int, error) {
-	_, err := l.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
+	_, err := l.SqlStore.UpdateUserAction(ctx, sqlc.UpdateUserActionParams{
 		Email: email,
 		LoginAt: pgtype.Timestamptz{
 			Valid: false,
@@ -33,6 +33,9 @@ func (l *logoutService) Logout(ctx context.Context, email string) (int, error) {
 		LogoutAt: pgtype.Timestamptz{
 			Time:  time.Now(),
 			Valid: true,
+		},
+		UpdatedAt: pgtype.Timestamptz{
+			Valid: false,
 		},
 	})
 	if err != nil {

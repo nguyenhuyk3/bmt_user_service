@@ -10,9 +10,16 @@ CREATE TYPE "sex" AS ENUM (
   'male'
 );
 
+CREATE TYPE "sources" AS ENUM (
+  'app',
+  'facebook',
+  'google'
+);
+
 CREATE TABLE "accounts" (
   "email" varchar(64) PRIMARY KEY NOT NULL,
   "password" varchar(64) NOT NULL,
+  "source" sources,
   "role" roles
 );
 

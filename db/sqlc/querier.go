@@ -11,17 +11,17 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-
 type Querier interface {
-	CheckAccountExistsByEmail(ctx context.Context, email string) (bool, error)
+	CheckAccountExistsByEmailAndSource(ctx context.Context, arg CheckAccountExistsByEmailAndSourceParams) (bool, error)
 	GetInforByEmail(ctx context.Context, email pgtype.Text) (UserInfos, error)
 	GetUserByEmail(ctx context.Context, email string) (Accounts, error)
 	InsertAccount(ctx context.Context, arg InsertAccountParams) error
 	InsertOAuth2Action(ctx context.Context, email pgtype.Text) error
 	InsertUserAction(ctx context.Context, email pgtype.Text) error
 	InsertUserInfo(ctx context.Context, arg InsertUserInfoParams) error
-	UpdateAction(ctx context.Context, arg UpdateActionParams) (pgconn.CommandTag, error)
+	UpdateInforByEmail(ctx context.Context, arg UpdateInforByEmailParams) error
 	UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error
+	UpdateUserAction(ctx context.Context, arg UpdateUserActionParams) (pgconn.CommandTag, error)
 }
 
 var _ Querier = (*Queries)(nil)

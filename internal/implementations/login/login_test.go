@@ -162,7 +162,7 @@ func TestLogin(t *testing.T) {
 					CreateRefreshToken(gomock.Any(), gomock.Any()).
 					Return(refreshToken, &jwt.Payload{}, nil)
 				mockSqlStore.EXPECT().
-					UpdateAction(gomock.Any(), gomock.Any()).
+					UpdateUserAction(gomock.Any(), gomock.Any()).
 					Return(pgconn.CommandTag{}, errors.New("update user action failed"))
 			},
 			request:          user,
@@ -187,7 +187,7 @@ func TestLogin(t *testing.T) {
 					CreateRefreshToken(gomock.Any(), gomock.Any()).
 					Return(refreshToken, &jwt.Payload{}, nil)
 				mockSqlStore.EXPECT().
-					UpdateAction(gomock.Any(), gomock.Any()).
+					UpdateUserAction(gomock.Any(), gomock.Any()).
 					Return(pgconn.CommandTag{}, nil)
 			},
 			request: user,

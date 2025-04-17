@@ -53,13 +53,16 @@ func (l *loginService) Login(ctx context.Context, arg request.LoginReq) (respons
 	}
 	result.RefreshToken = refreshToken
 
-	_, err = l.SqlStore.UpdateAction(ctx, sqlc.UpdateActionParams{
+	_, err = l.SqlStore.UpdateUserAction(ctx, sqlc.UpdateUserActionParams{
 		Email: user.Email,
 		LoginAt: pgtype.Timestamptz{
 			Time:  time.Now(),
 			Valid: true,
 		},
 		LogoutAt: pgtype.Timestamptz{
+			Valid: false,
+		},
+		UpdatedAt: pgtype.Timestamptz{
 			Valid: false,
 		},
 	})

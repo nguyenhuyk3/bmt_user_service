@@ -33,6 +33,43 @@ func NewAuthMiddleware(jwtMake jwt.IMaker, redisClient services.IRedis) *AuthMid
 	}
 }
 
+func (am *AuthMiddleware) GetAccessToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			responses.FailureResponse(c, http.StatusUnauthorized, "unauthorized: no access token provided")
+			c.Abort()
+			return
+		}
+
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+			responses.FailureResponse(c, http.StatusUnauthorized, "invalid Authorization header format")
+			c.Abort()
+			return
+		}
+
+		accessToken := parts[1]
+
+		c.Set(access_token, accessToken)
+		c.Next()
+	}
+}
+
+func (am *AuthMiddleware) GetRefreshToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var req request.LogoutReq
+		if err := c.ShouldBindJSON(&req); err != nil {
+			responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+			c.Abort()
+			return
+		}
+
+		c.Set(refresh_token, req.RefreshToken)
+		c.Next()
+	}
+}
+
 func (am *AuthMiddleware) CheckAccessTokenInBlackList() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken := c.GetString(access_token)
@@ -112,43 +149,6 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 
 		c.Set("role", claims.Role)
 		c.Set("email", claims.Email)
-		c.Next()
-	}
-}
-
-func (am *AuthMiddleware) GetAccessToken() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-			responses.FailureResponse(c, http.StatusUnauthorized, "unauthorized: no access token provided")
-			c.Abort()
-			return
-		}
-
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			responses.FailureResponse(c, http.StatusUnauthorized, "invalid Authorization header format")
-			c.Abort()
-			return
-		}
-
-		accessToken := parts[1]
-
-		c.Set(access_token, accessToken)
-		c.Next()
-	}
-}
-
-func (am *AuthMiddleware) GetRefreshToken() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var req request.LogoutReq
-		if err := c.ShouldBindJSON(&req); err != nil {
-			responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
-			c.Abort()
-			return
-		}
-
-		c.Set(refresh_token, req.RefreshToken)
 		c.Next()
 	}
 }

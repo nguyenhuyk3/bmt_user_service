@@ -28,3 +28,29 @@ func (q *Queries) GetInforByEmail(ctx context.Context, email pgtype.Text) (UserI
 	)
 	return i, err
 }
+
+const updateInforByEmail = `-- name: UpdateInforByEmail :exec
+UPDATE user_infos
+SET 
+    name = $2, 
+    sex = $3,
+    birth_day = $4
+WHERE email = $1
+`
+
+type UpdateInforByEmailParams struct {
+	Email    pgtype.Text `json:"email"`
+	Name     string      `json:"name"`
+	Sex      NullSex     `json:"sex"`
+	BirthDay string      `json:"birth_day"`
+}
+
+func (q *Queries) UpdateInforByEmail(ctx context.Context, arg UpdateInforByEmailParams) error {
+	_, err := q.db.Exec(ctx, updateInforByEmail,
+		arg.Email,
+		arg.Name,
+		arg.Sex,
+		arg.BirthDay,
+	)
+	return err
+}

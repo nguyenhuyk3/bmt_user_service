@@ -3,6 +3,7 @@ package sqlc
 import (
 	"context"
 	"fmt"
+	"time"
 	"user_service/dto/request"
 	"user_service/utils/cryptor"
 
@@ -98,6 +99,51 @@ func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRe
 
 	if err != nil {
 		// If the transaction failed, return the error
+		return fmt.Errorf("transaction failed: %v", err)
+	}
+
+	return err
+}
+
+// UpdateUserInforTran implements IStore.
+func (s *SqlStore) UpdateUserInforTran(ctx context.Context, arg request.ChangeInforReq) error {
+	err := s.execTran(ctx, func(q *Queries) error {
+		var sex NullSex
+		err := sex.Scan(arg.Sex)
+		if err != nil {
+			return fmt.Errorf("failed to scan sex: %v", err)
+		}
+
+		err = s.Queries.UpdateInforByEmail(ctx, UpdateInforByEmailParams{
+			Email:    pgtype.Text{String: arg.Email, Valid: true},
+			Name:     arg.Name,
+			Sex:      sex,
+			BirthDay: arg.BirthDay})
+		if err != nil {
+			return fmt.Errorf("failed to update user information: %v", err)
+		}
+
+		_, err = s.Queries.UpdateUserAction(ctx, UpdateUserActionParams{
+			Email: arg.Email,
+			LoginAt: pgtype.Timestamptz{
+				Valid: false,
+			},
+			LogoutAt: pgtype.Timestamptz{
+				Valid: false,
+			},
+			UpdatedAt: pgtype.Timestamptz{
+				Time:  time.Now(),
+				Valid: true,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to update user action: %v", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
 		return fmt.Errorf("transaction failed: %v", err)
 	}
 

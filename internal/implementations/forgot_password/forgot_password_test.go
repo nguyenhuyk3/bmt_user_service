@@ -42,7 +42,12 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 
 	email := "test-email@gmail.com"
 	aesEncryptedEmail, _ := cryptor.AesEncrypt(email)
-	// bcryptEncryptedEmail, _ := cryptor.BcryptHashInput(email)
+	arg := sqlc.CheckAccountExistsByEmailAndSourceParams{
+		Email: email,
+		Source: sqlc.NullSources{
+			Sources: sqlc.SourcesApp,
+			Valid:   true},
+	}
 
 	// Keys for Redis
 	attemptKey := fmt.Sprintf("%s%s", global.ATTEMPT_KEY, aesEncryptedEmail)
@@ -50,7 +55,6 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 	forgotPasswordKey := fmt.Sprintf("%s%s", global.FORGOT_PASSWORD_KEY, aesEncryptedEmail)
 
 	var res blockSendForgotPasswordOtp
-	// otp, _ := generator.GenerateStringNumberBasedOnLength(6)
 
 	testCases := []struct {
 		name           string
@@ -63,7 +67,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "Error checking email existence",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, errors.New("database error"))
 			},
 			request: request.SendOtpReq{
@@ -76,7 +80,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "Email doesn't exist",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, nil)
 			},
 			request: request.SendOtpReq{
@@ -89,7 +93,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "Account is blocked",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 				mockRedis.EXPECT().
 					GetTTL(blockKey).
@@ -108,7 +112,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "First attempt - should succeed",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 				mockRedis.EXPECT().
 					GetTTL(blockKey).
@@ -147,7 +151,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "Too many attempts",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 				mockRedis.EXPECT().
 					GetTTL(blockKey).
@@ -177,7 +181,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "OTP already exists and not expired",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 				mockRedis.EXPECT().
 					GetTTL(blockKey).
@@ -199,7 +203,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 			name: "Send email fails",
 			setUp: func() {
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 				mockRedis.EXPECT().
 					GetTTL(blockKey).

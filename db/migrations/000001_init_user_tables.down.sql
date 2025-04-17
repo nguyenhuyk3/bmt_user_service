@@ -15,3 +15,4 @@ DROP TABLE IF EXISTS "accounts";
 -- Drop types
 DROP TYPE IF EXISTS "roles";
 DROP TYPE IF EXISTS "sex";
+DROP TYPE IF EXISTS "sources";

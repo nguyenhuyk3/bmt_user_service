@@ -16,10 +16,14 @@ type customerService struct {
 	SqlStore sqlc.IStore
 }
 
-func NewCustomerService(sqlStore sqlc.IStore) services.ICustomer {
-	return &customerService{
-		SqlStore: sqlStore,
+// UpdateUserInfor implements services.ICustomer.
+func (c *customerService) UpdateUserInfor(ctx context.Context, arg request.ChangeInforReq) (int, error) {
+	err := c.SqlStore.UpdateUserInforTran(ctx, arg)
+	if err != nil {
+		return http.StatusInternalServerError, err
 	}
+
+	return http.StatusOK, nil
 }
 
 // GetInfor implements services.ICustomer.
@@ -40,4 +44,10 @@ func (c *customerService) GetInfor(ctx context.Context, arg request.GetInforReq)
 	}
 
 	return data, http.StatusOK, nil
+}
+
+func NewCustomerService(sqlStore sqlc.IStore) services.ICustomer {
+	return &customerService{
+		SqlStore: sqlStore,
+	}
 }

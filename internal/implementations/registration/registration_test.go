@@ -40,6 +40,12 @@ func TestSendRegistrationOtp(t *testing.T) {
 	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
+	arg := sqlc.CheckAccountExistsByEmailAndSourceParams{
+		Email: email,
+		Source: sqlc.NullSources{
+			Sources: sqlc.SourcesApp,
+			Valid:   true},
+	}
 	encryptedAesEmail, err := cryptor.AesEncrypt(email)
 	require.NoError(t, err)
 
@@ -75,7 +81,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, errors.New("failed to check email existence in database"))
 			},
 			expectedStatus: http.StatusInternalServerError,
@@ -87,7 +93,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(true, nil)
 			},
 			expectedStatus: http.StatusConflict,
@@ -99,7 +105,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, nil)
 				mockRedis.EXPECT().
 					Save(registrationOtpKey, gomock.Any(), int64(ten_minutes)).
@@ -118,7 +124,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 				mockRedis.EXPECT().ExistsKey(registrationOtpKey).Times(1).Return(false)
 				mockRedis.EXPECT().ExistsKey(completeRegistrationProcessKey).Times(1).Return(false)
 				mockSqlStore.EXPECT().
-					CheckAccountExistsByEmail(gomock.Any(), email).
+					CheckAccountExistsByEmailAndSource(gomock.Any(), arg).
 					Return(false, nil)
 				mockRedis.EXPECT().Save(registrationOtpKey, gomock.Any(), int64(ten_minutes)).Return(nil)
 				mockBroker.EXPECT().

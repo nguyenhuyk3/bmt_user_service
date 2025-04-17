@@ -235,32 +235,32 @@ func (mr *MockILogoutMockRecorder) Logout(ctx, email any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockILogout)(nil).Logout), ctx, email)
 }
 
-// MockIOAuth2Login is a mock of IOAuth2Login interface.
-type MockIOAuth2Login struct {
+// MockIOAuth2 is a mock of IOAuth2 interface.
+type MockIOAuth2 struct {
 	ctrl     *gomock.Controller
-	recorder *MockIOAuth2LoginMockRecorder
+	recorder *MockIOAuth2MockRecorder
 	isgomock struct{}
 }
 
-// MockIOAuth2LoginMockRecorder is the mock recorder for MockIOAuth2Login.
-type MockIOAuth2LoginMockRecorder struct {
-	mock *MockIOAuth2Login
+// MockIOAuth2MockRecorder is the mock recorder for MockIOAuth2.
+type MockIOAuth2MockRecorder struct {
+	mock *MockIOAuth2
 }
 
-// NewMockIOAuth2Login creates a new mock instance.
-func NewMockIOAuth2Login(ctrl *gomock.Controller) *MockIOAuth2Login {
-	mock := &MockIOAuth2Login{ctrl: ctrl}
-	mock.recorder = &MockIOAuth2LoginMockRecorder{mock}
+// NewMockIOAuth2 creates a new mock instance.
+func NewMockIOAuth2(ctrl *gomock.Controller) *MockIOAuth2 {
+	mock := &MockIOAuth2{ctrl: ctrl}
+	mock.recorder = &MockIOAuth2MockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIOAuth2Login) EXPECT() *MockIOAuth2LoginMockRecorder {
+func (m *MockIOAuth2) EXPECT() *MockIOAuth2MockRecorder {
 	return m.recorder
 }
 
 // CheckOAuth2UserByEmail mocks base method.
-func (m *MockIOAuth2Login) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
+func (m *MockIOAuth2) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckOAuth2UserByEmail", ctx, email)
 	ret0, _ := ret[0].(bool)
@@ -269,13 +269,13 @@ func (m *MockIOAuth2Login) CheckOAuth2UserByEmail(ctx context.Context, email str
 }
 
 // CheckOAuth2UserByEmail indicates an expected call of CheckOAuth2UserByEmail.
-func (mr *MockIOAuth2LoginMockRecorder) CheckOAuth2UserByEmail(ctx, email any) *gomock.Call {
+func (mr *MockIOAuth2MockRecorder) CheckOAuth2UserByEmail(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIOAuth2Login)(nil).CheckOAuth2UserByEmail), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIOAuth2)(nil).CheckOAuth2UserByEmail), ctx, email)
 }
 
 // InserOAuth2UsertUser mocks base method.
-func (m *MockIOAuth2Login) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
+func (m *MockIOAuth2) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InserOAuth2UsertUser", ctx, arg)
 	ret0, _ := ret[0].(int)
@@ -284,13 +284,13 @@ func (m *MockIOAuth2Login) InserOAuth2UsertUser(ctx context.Context, arg respons
 }
 
 // InserOAuth2UsertUser indicates an expected call of InserOAuth2UsertUser.
-func (mr *MockIOAuth2LoginMockRecorder) InserOAuth2UsertUser(ctx, arg any) *gomock.Call {
+func (mr *MockIOAuth2MockRecorder) InserOAuth2UsertUser(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2UsertUser", reflect.TypeOf((*MockIOAuth2Login)(nil).InserOAuth2UsertUser), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2UsertUser", reflect.TypeOf((*MockIOAuth2)(nil).InserOAuth2UsertUser), ctx, arg)
 }
 
 // ReturnToken mocks base method.
-func (m *MockIOAuth2Login) ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error) {
+func (m *MockIOAuth2) ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReturnToken", ctx, email)
 	ret0, _ := ret[0].(response.LoginRes)
@@ -300,153 +300,7 @@ func (m *MockIOAuth2Login) ReturnToken(ctx context.Context, email string) (respo
 }
 
 // ReturnToken indicates an expected call of ReturnToken.
-func (mr *MockIOAuth2LoginMockRecorder) ReturnToken(ctx, email any) *gomock.Call {
+func (mr *MockIOAuth2MockRecorder) ReturnToken(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReturnToken", reflect.TypeOf((*MockIOAuth2Login)(nil).ReturnToken), ctx, email)
-}
-
-// MockIAuth is a mock of IAuth interface.
-type MockIAuth struct {
-	ctrl     *gomock.Controller
-	recorder *MockIAuthMockRecorder
-	isgomock struct{}
-}
-
-// MockIAuthMockRecorder is the mock recorder for MockIAuth.
-type MockIAuthMockRecorder struct {
-	mock *MockIAuth
-}
-
-// NewMockIAuth creates a new mock instance.
-func NewMockIAuth(ctrl *gomock.Controller) *MockIAuth {
-	mock := &MockIAuth{ctrl: ctrl}
-	mock.recorder = &MockIAuthMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIAuth) EXPECT() *MockIAuthMockRecorder {
-	return m.recorder
-}
-
-// CheckOAuth2UserByEmail mocks base method.
-func (m *MockIAuth) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckOAuth2UserByEmail", ctx, email)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CheckOAuth2UserByEmail indicates an expected call of CheckOAuth2UserByEmail.
-func (mr *MockIAuthMockRecorder) CheckOAuth2UserByEmail(ctx, email any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIAuth)(nil).CheckOAuth2UserByEmail), ctx, email)
-}
-
-// CompleteForgotPassword mocks base method.
-func (m *MockIAuth) CompleteForgotPassword(ctx context.Context, arg request.CompleteForgotPasswordReq) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CompleteForgotPassword", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CompleteForgotPassword indicates an expected call of CompleteForgotPassword.
-func (mr *MockIAuthMockRecorder) CompleteForgotPassword(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CompleteForgotPassword", reflect.TypeOf((*MockIAuth)(nil).CompleteForgotPassword), ctx, arg)
-}
-
-// InserOAuth2UsertUser mocks base method.
-func (m *MockIAuth) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InserOAuth2UsertUser", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// InserOAuth2UsertUser indicates an expected call of InserOAuth2UsertUser.
-func (mr *MockIAuthMockRecorder) InserOAuth2UsertUser(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2UsertUser", reflect.TypeOf((*MockIAuth)(nil).InserOAuth2UsertUser), ctx, arg)
-}
-
-// Login mocks base method.
-func (m *MockIAuth) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, arg)
-	ret0, _ := ret[0].(response.LoginRes)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// Login indicates an expected call of Login.
-func (mr *MockIAuthMockRecorder) Login(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockIAuth)(nil).Login), ctx, arg)
-}
-
-// Logout mocks base method.
-func (m *MockIAuth) Logout(ctx context.Context, email string) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Logout", ctx, email)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Logout indicates an expected call of Logout.
-func (mr *MockIAuthMockRecorder) Logout(ctx, email any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logout", reflect.TypeOf((*MockIAuth)(nil).Logout), ctx, email)
-}
-
-// ReturnToken mocks base method.
-func (m *MockIAuth) ReturnToken(ctx context.Context, email string) (response.LoginRes, int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReturnToken", ctx, email)
-	ret0, _ := ret[0].(response.LoginRes)
-	ret1, _ := ret[1].(int)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// ReturnToken indicates an expected call of ReturnToken.
-func (mr *MockIAuthMockRecorder) ReturnToken(ctx, email any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReturnToken", reflect.TypeOf((*MockIAuth)(nil).ReturnToken), ctx, email)
-}
-
-// SendForgotPasswordOtp mocks base method.
-func (m *MockIAuth) SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendForgotPasswordOtp", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SendForgotPasswordOtp indicates an expected call of SendForgotPasswordOtp.
-func (mr *MockIAuthMockRecorder) SendForgotPasswordOtp(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendForgotPasswordOtp", reflect.TypeOf((*MockIAuth)(nil).SendForgotPasswordOtp), ctx, arg)
-}
-
-// VerifyForgotPasswordOtp mocks base method.
-func (m *MockIAuth) VerifyForgotPasswordOtp(ctx context.Context, arg request.VerifyOtpReq) (int, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "VerifyForgotPasswordOtp", ctx, arg)
-	ret0, _ := ret[0].(int)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// VerifyForgotPasswordOtp indicates an expected call of VerifyForgotPasswordOtp.
-func (mr *MockIAuthMockRecorder) VerifyForgotPasswordOtp(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VerifyForgotPasswordOtp", reflect.TypeOf((*MockIAuth)(nil).VerifyForgotPasswordOtp), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReturnToken", reflect.TypeOf((*MockIOAuth2)(nil).ReturnToken), ctx, email)
 }

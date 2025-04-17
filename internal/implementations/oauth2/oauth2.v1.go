@@ -19,8 +19,24 @@ type oAuth2Service struct {
 }
 
 // CheckOAuth2UserByEmail implements services.IOAuth2Login.
-func (o *oAuth2Service) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
-	isExists, err := o.SqlStore.CheckAccountExistsByEmail(ctx, email)
+func (o *oAuth2Service) CheckOAuth2UserByEmail(ctx context.Context, arg request.EmailAndSource) (bool, error) {
+	var source sqlc.Sources
+
+	// Map the source string to the appropriate enum value
+	switch arg.Source {
+	case "google":
+		source = sqlc.SourcesGoogle
+	case "facebook":
+		source = sqlc.SourcesFacebook
+	default:
+		return false, fmt.Errorf("unsupported source: %s", arg.Source)
+	}
+	isExists, err := o.SqlStore.CheckAccountExistsByEmailAndSource(ctx,
+		sqlc.CheckAccountExistsByEmailAndSourceParams{
+			Email: arg.Email,
+			Source: sqlc.NullSources{
+				Sources: source,
+				Valid:   true}})
 	if err != nil {
 		return false, fmt.Errorf("an error occur when querying to db: %v", err)
 	}
@@ -31,8 +47,8 @@ func (o *oAuth2Service) CheckOAuth2UserByEmail(ctx context.Context, email string
 	}
 }
 
-// InserOAuth2UsertUser implements services.IOAuth2Login.
-func (o *oAuth2Service) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
+// InserOAuth2User implements services.IOAuth2Login.
+func (o *oAuth2Service) InserOAuth2User(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	hasedPassword, _ := cryptor.BcryptHashInput(arg.Id)
 	err := o.SqlStore.InsertAccountTran(ctx, request.CompleteRegistrationReq{
 		Account: request.Account{

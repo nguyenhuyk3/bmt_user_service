@@ -97,10 +97,54 @@ func (ns NullSex) Value() (driver.Value, error) {
 	return string(ns.Sex), nil
 }
 
+type Sources string
+
+const (
+	SourcesApp      Sources = "app"
+	SourcesFacebook Sources = "facebook"
+	SourcesGoogle   Sources = "google"
+)
+
+func (e *Sources) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Sources(s)
+	case string:
+		*e = Sources(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Sources: %T", src)
+	}
+	return nil
+}
+
+type NullSources struct {
+	Sources Sources `json:"sources"`
+	Valid   bool    `json:"valid"` // Valid is true if Sources is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSources) Scan(value interface{}) error {
+	if value == nil {
+		ns.Sources, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Sources.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSources) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Sources), nil
+}
+
 type Accounts struct {
-	Email    string    `json:"email"`
-	Password string    `json:"password"`
-	Role     NullRoles `json:"role"`
+	Email    string      `json:"email"`
+	Password string      `json:"password"`
+	Source   NullSources `json:"source"`
+	Role     NullRoles   `json:"role"`
 }
 
 type UserActions struct {

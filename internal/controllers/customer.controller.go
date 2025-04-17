@@ -39,3 +39,30 @@ func (cc *CustomerController) GetInfor(c *gin.Context) {
 
 	responses.SuccessResponse(c, http.StatusOK, "get infor perform successfully", data)
 }
+
+func (cc *CustomerController) UpdateUserInfo(c *gin.Context) {
+	email := c.GetString("email")
+	if email == "" {
+		responses.FailureResponse(c, http.StatusBadRequest, "email is not empty")
+		return
+	}
+
+	var req request.ChangeInforReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+		return
+	}
+
+	req.Email = email
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	status, err := cc.CustomerService.UpdateUserInfor(ctx, req)
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "change infor perform successfully", nil)
+}
