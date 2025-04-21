@@ -110,6 +110,11 @@ func (am *AuthMiddleware) CheckRefreshTokenInBlackList() gin.HandlerFunc {
 	}
 }
 
+/*
+* Step 1: Verify the access token
+* Step 2: If access token is expired, attempt to refresh with refresh toke
+* Step 3: Verify and refresh access token using refresh token
+ */
 func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken := c.GetString(access_token)
@@ -118,10 +123,10 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		// Step 1: Verify the access token
+		// Step 1
 		claims, err := am.JwtMaker.VerifyAccessToken(accessToken)
 		if err != nil {
-			// Step 2: If access token is expired, attempt to refresh with refresh token
+			// Step 2
 			if err.Error() == jwt.ExpiredTokenErr.Error() {
 				// Get the refresh token from request header
 				refreshToken := c.GetHeader(x_refresh_token)
@@ -130,7 +135,7 @@ func (am *AuthMiddleware) CheckPermission() gin.HandlerFunc {
 					c.Abort()
 					return
 				}
-				// Step 3: Verify and refresh access token using refresh token
+				// Step 3
 				newAccessToken, _, refreshErr := am.JwtMaker.RefreshAccessToken(refreshToken)
 				if refreshErr != nil {
 					responses.FailureResponse(c, http.StatusUnauthorized, fmt.Sprintf("failed to refresh token: %v", refreshErr))

@@ -22,6 +22,16 @@ type loginService struct {
 	JwtMaker jwt.IMaker
 }
 
+// CreateNewAccessToken implements services.ILogin.
+func (l *loginService) CreateNewAccessToken(ctx context.Context, refreshToken string) (string, interface{}, int, error) {
+	token, payload, err := l.JwtMaker.RefreshAccessToken(refreshToken)
+	if err != nil {
+		return "", nil, http.StatusInternalServerError, err
+	}
+
+	return token, payload, http.StatusOK, nil
+}
+
 // Login implements services.ILogin.
 func (l *loginService) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
 	var result response.LoginRes

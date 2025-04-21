@@ -221,3 +221,108 @@ func TestLogin(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateNewAccessToken(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockJwt := mocks.NewMockIMaker(ctrl)
+	mockSqlStore := mocks.NewMockIStore(ctrl)
+	loginService := newTestLoginService(mockJwt, mockSqlStore)
+	// Generate a sample refresh token
+	refreshToken, err := generator.GenerateStringNumberBasedOnLength(64)
+	require.NoError(t, err)
+	// Generate a sample access token
+	accessToken, err := generator.GenerateStringNumberBasedOnLength(64)
+	require.NoError(t, err)
+	// Prepare test payload
+	testPayload := &jwt.Payload{
+		Email: "test-email@gmail.com",
+		Role:  string(sqlc.RolesCustomer),
+	}
+
+	testCases := []struct {
+		name            string
+		setUp           func()
+		refreshToken    string
+		expectedToken   string
+		expectedPayload interface{}
+		expectedStatus  int
+		expectErr       bool
+	}{
+		{
+			name: "Success",
+			setUp: func() {
+				mockJwt.EXPECT().
+					RefreshAccessToken(refreshToken).
+					Return(accessToken, testPayload, nil)
+			},
+			refreshToken:    refreshToken,
+			expectedToken:   accessToken,
+			expectedPayload: testPayload,
+			expectedStatus:  http.StatusOK,
+			expectErr:       false,
+		},
+		// {
+		// 	name: "Invalid refresh token",
+		// 	setUp: func() {
+		// 		mockJwt.EXPECT().
+		// 			RefreshAccessToken(refreshToken).
+		// 			Return("", nil, errors.New("invalid or expired refresh token"))
+		// 	},
+		// 	refreshToken:    refreshToken,
+		// 	expectedToken:   "",
+		// 	expectedPayload: nil,
+		// 	expectedStatus:  http.StatusInternalServerError,
+		// 	expectErr:       true,
+		// },
+		{
+			name: "Token generation error",
+			setUp: func() {
+				mockJwt.EXPECT().
+					RefreshAccessToken(refreshToken).
+					Return("", nil, errors.New("failed to generate new access token"))
+			},
+			refreshToken:    refreshToken,
+			expectedToken:   "",
+			expectedPayload: nil,
+			expectedStatus:  http.StatusInternalServerError,
+			expectErr:       true,
+		},
+		// {
+		// 	name: "Empty refresh token",
+		// 	setUp: func() {
+		// 		mockJwt.EXPECT().
+		// 			RefreshAccessToken("").
+		// 			Return("", nil, errors.New("refresh token cannot be empty"))
+		// 	},
+		// 	refreshToken:    "",
+		// 	expectedToken:   "",
+		// 	expectedPayload: nil,
+		// 	expectedStatus:  http.StatusInternalServerError,
+		// 	expectErr:       true,
+		// },
+	}
+
+	for i := range testCases {
+		tc := testCases[i]
+
+		t.Run(tc.name, func(t *testing.T) {
+			tc.setUp()
+
+			token, payload, status, err := loginService.CreateNewAccessToken(context.TODO(), tc.refreshToken)
+
+			assert.Equal(t, tc.expectedStatus, status)
+
+			if tc.expectErr {
+				assert.Error(t, err)
+				assert.Empty(t, token)
+				assert.Nil(t, payload)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tc.expectedToken, token)
+				assert.Equal(t, tc.expectedPayload, payload)
+			}
+		})
+	}
+}

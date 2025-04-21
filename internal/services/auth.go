@@ -16,6 +16,7 @@ type IRegistration interface {
 
 type ILogin interface {
 	Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error)
+	CreateNewAccessToken(ctx context.Context, refreshToken string) (string, interface{}, int, error)
 }
 
 type IForgotPassword interface {

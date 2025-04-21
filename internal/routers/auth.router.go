@@ -32,6 +32,8 @@ func (ar *AuthRouter) InitAuthRouter(router *gin.RouterGroup, authMiddleware *mi
 		authRouterPublic.GET("/oauth2/facebook_login", authController.FacebookLogin)
 		authRouterPublic.GET("/oauth2/facebook/callback", authController.FacebookgCallbak)
 
+		authRouterPublic.POST("/create_new_access_token", authController.CreateNewAccessToken)
+
 		authRouterPublic.POST("/logout",
 			authMiddleware.GetAccessToken(),
 			authMiddleware.GetRefreshToken(),

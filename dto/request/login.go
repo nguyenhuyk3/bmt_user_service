@@ -9,3 +9,7 @@ type EmailAndSource struct {
 	Email  string
 	Source string
 }
+
+type CreateNewAccessTokenReq struct {
+	RefreshToken string `json:"refrest_token" binding:"required"`
+}

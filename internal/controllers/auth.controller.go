@@ -127,6 +127,28 @@ func (ac *AuthController) Login(c *gin.Context) {
 	responses.SuccessResponse(c, http.StatusOK, "login perform successfully", data)
 }
 
+func (ac *AuthController) CreateNewAccessToken(c *gin.Context) {
+	var req request.CreateNewAccessTokenReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responses.FailureResponse(c, http.StatusBadRequest, "request is invalid")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+
+	token, data, status, err := ac.LoginService.CreateNewAccessToken(ctx, req.RefreshToken)
+	if err != nil {
+		responses.FailureResponse(c, status, err.Error())
+		return
+	}
+
+	responses.SuccessResponse(c, http.StatusOK, "login perform successfully", gin.H{
+		"new_access_token": token,
+		"payload":          data,
+	})
+}
+
 func (ac *AuthController) SendForgotPasswordOtp(c *gin.Context) {
 	var req request.SendOtpReq
 	if err := c.ShouldBindJSON(&req); err != nil {

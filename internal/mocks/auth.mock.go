@@ -111,6 +111,23 @@ func (m *MockILogin) EXPECT() *MockILoginMockRecorder {
 	return m.recorder
 }
 
+// CreateNewAccessToken mocks base method.
+func (m *MockILogin) CreateNewAccessToken(ctx context.Context, refreshToken string) (string, any, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateNewAccessToken", ctx, refreshToken)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(any)
+	ret2, _ := ret[2].(int)
+	ret3, _ := ret[3].(error)
+	return ret0, ret1, ret2, ret3
+}
+
+// CreateNewAccessToken indicates an expected call of CreateNewAccessToken.
+func (mr *MockILoginMockRecorder) CreateNewAccessToken(ctx, refreshToken any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateNewAccessToken", reflect.TypeOf((*MockILogin)(nil).CreateNewAccessToken), ctx, refreshToken)
+}
+
 // Login mocks base method.
 func (m *MockILogin) Login(ctx context.Context, arg request.LoginReq) (response.LoginRes, int, error) {
 	m.ctrl.T.Helper()
@@ -260,33 +277,33 @@ func (m *MockIOAuth2) EXPECT() *MockIOAuth2MockRecorder {
 }
 
 // CheckOAuth2UserByEmail mocks base method.
-func (m *MockIOAuth2) CheckOAuth2UserByEmail(ctx context.Context, email string) (bool, error) {
+func (m *MockIOAuth2) CheckOAuth2UserByEmail(ctx context.Context, arg request.EmailAndSource) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CheckOAuth2UserByEmail", ctx, email)
+	ret := m.ctrl.Call(m, "CheckOAuth2UserByEmail", ctx, arg)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // CheckOAuth2UserByEmail indicates an expected call of CheckOAuth2UserByEmail.
-func (mr *MockIOAuth2MockRecorder) CheckOAuth2UserByEmail(ctx, email any) *gomock.Call {
+func (mr *MockIOAuth2MockRecorder) CheckOAuth2UserByEmail(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIOAuth2)(nil).CheckOAuth2UserByEmail), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckOAuth2UserByEmail", reflect.TypeOf((*MockIOAuth2)(nil).CheckOAuth2UserByEmail), ctx, arg)
 }
 
-// InserOAuth2UsertUser mocks base method.
-func (m *MockIOAuth2) InserOAuth2UsertUser(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
+// InserOAuth2User mocks base method.
+func (m *MockIOAuth2) InserOAuth2User(ctx context.Context, arg response.OAuth2UserInfo) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InserOAuth2UsertUser", ctx, arg)
+	ret := m.ctrl.Call(m, "InserOAuth2User", ctx, arg)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// InserOAuth2UsertUser indicates an expected call of InserOAuth2UsertUser.
-func (mr *MockIOAuth2MockRecorder) InserOAuth2UsertUser(ctx, arg any) *gomock.Call {
+// InserOAuth2User indicates an expected call of InserOAuth2User.
+func (mr *MockIOAuth2MockRecorder) InserOAuth2User(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2UsertUser", reflect.TypeOf((*MockIOAuth2)(nil).InserOAuth2UsertUser), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InserOAuth2User", reflect.TypeOf((*MockIOAuth2)(nil).InserOAuth2User), ctx, arg)
 }
 
 // ReturnToken mocks base method.
