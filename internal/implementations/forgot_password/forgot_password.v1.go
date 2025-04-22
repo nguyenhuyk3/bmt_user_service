@@ -46,17 +46,14 @@ type verifyOtp struct {
  */
 // SendForgotPasswordOtp implements services.IForgotPassword.
 func (f *fotgotPasswordService) SendForgotPasswordOtp(ctx context.Context, arg request.SendOtpReq) (int, error) {
-	var source sqlc.NullSources
-
-	err := source.Scan("app")
-	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to scan source: %v", err)
-	}
 	// * Step 1
 	isExists, err := f.SqlStore.CheckAccountExistsByEmailAndSource(ctx,
 		sqlc.CheckAccountExistsByEmailAndSourceParams{
-			Email:  arg.Email,
-			Source: source})
+			Email: arg.Email,
+			Source: sqlc.NullSources{
+				Sources: sqlc.SourcesApp,
+				Valid:   true,
+			}})
 	if err != nil {
 		return http.StatusInternalServerError, errors.New("failed to check email existence in database")
 	}

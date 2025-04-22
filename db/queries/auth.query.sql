@@ -4,8 +4,8 @@ SELECT EXISTS(
 ) AS exists;
 
 -- name: InsertAccount :exec
-INSERT INTO "accounts" ("email", "password", "role")
-VALUES ($1, $2, $3);
+INSERT INTO "accounts" ("email", "password", "source", "role")
+VALUES ($1, $2, $3, $4);
 
 -- name: InsertUserInfo :exec
 INSERT INTO "user_infos" ("email", "name", "sex", "birth_day")

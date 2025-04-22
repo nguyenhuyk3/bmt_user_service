@@ -1,7 +1,6 @@
 package loggers
 
 import (
-	"os"
 	"user_service/pkgs/settings"
 
 	"github.com/natefinch/lumberjack"
@@ -13,14 +12,14 @@ type LoggerZap struct {
 	*zap.Logger
 }
 
-func removeOldLogIfExists(path string) {
-	if _, err := os.Stat(path); err == nil {
-		_ = os.Remove(path)
-	}
-}
+// func removeOldLogIfExists(path string) {
+// 	if _, err := os.Stat(path); err == nil {
+// 		_ = os.Remove(path)
+// 	}
+// }
 
 func NewLogger(config settings.LoggerSetting) *LoggerZap {
-	removeOldLogIfExists(config.FileLogName)
+	// removeOldLogIfExists(config.FileLogName)
 
 	logLevel := config.LogLevel
 	// debug -> info -> warn -> error -> fatal -> panic

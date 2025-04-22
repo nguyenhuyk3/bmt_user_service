@@ -51,7 +51,10 @@ func (s *SqlStore) InsertAccountTran(ctx context.Context, arg request.CompleteRe
 		err = q.InsertAccount(ctx, InsertAccountParams{
 			Email:    arg.Account.Email,
 			Password: hashedPassword,
-			Role:     role,
+			Source: NullSources{
+				Sources: SourcesApp,
+				Valid:   true},
+			Role: role,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to insert account: %v", err)

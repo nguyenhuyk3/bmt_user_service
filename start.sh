@@ -8,8 +8,6 @@ if [ -z "$CONTAINER_DB_URL" ]; then
     CONTAINER_DB_URL=$(grep -A 1 "database:" local.yaml | grep "url" | cut -d ':' -f2- | xargs)
 fi
 
-echo "Using DB_URL: $CONTAINER_DB_URL"
-
 if [ -n "$CONTAINER_DB_URL" ]; then
     echo "running database migrations..."
     migrate -path ./db/migrations -database "$CONTAINER_DB_URL" up
