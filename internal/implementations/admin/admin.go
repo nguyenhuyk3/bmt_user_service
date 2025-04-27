@@ -22,7 +22,7 @@ func (c *adminService) CreateAdminAccount(ctx context.Context, arg request.Creat
 		Account: request.Account{
 			Email:    arg.AdminAccount.Email,
 			Password: arg.AdminAccount.Password,
-			Role:     "manage"},
+			Role:     "manager"},
 		Info: request.Info{
 			Name:     arg.Info.Name,
 			Sex:      arg.Info.Sex,

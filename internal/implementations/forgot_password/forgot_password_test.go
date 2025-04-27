@@ -25,7 +25,7 @@ import (
 func newForgotPasswordService(
 	sqlStore sqlc.IStore,
 	redisClient services.IRedis,
-	messageBroker services.IMessageBroker) services.IForgotPassword {
+	messageBroker services.IMessageBrokerWriter) services.IForgotPassword {
 	fortests.LoadConfigsForTests()
 
 	return NewForgotPasswordSevice(sqlStore, redisClient, messageBroker)
@@ -37,7 +37,7 @@ func TestSendForgotPasswordOtp(t *testing.T) {
 
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	mockBroker := mocks.NewMockIMessageBrokerWriter(ctrl)
 	forgotPasswordService := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
@@ -258,7 +258,7 @@ func TestVerifyForgotPasswordOtp(t *testing.T) {
 
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	mockBroker := mocks.NewMockIMessageBrokerWriter(ctrl)
 	forgotPasswordService := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
@@ -387,7 +387,7 @@ func TestCompleteForgotPassword(t *testing.T) {
 
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	mockBroker := mocks.NewMockIMessageBrokerWriter(ctrl)
 	forgotPasswordService := newForgotPasswordService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"

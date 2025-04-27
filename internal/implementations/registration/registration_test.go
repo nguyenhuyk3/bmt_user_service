@@ -24,7 +24,7 @@ import (
 func newTestAuthService(
 	sqlStore sqlc.IStore,
 	redisClient services.IRedis,
-	messageBroker services.IMessageBroker) services.IRegistration {
+	messageBroker services.IMessageBrokerWriter) services.IRegistration {
 	fortests.LoadConfigsForTests()
 
 	return NewRegistrationService(sqlStore, redisClient, messageBroker)
@@ -36,7 +36,7 @@ func TestSendRegistrationOtp(t *testing.T) {
 
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	mockBroker := mocks.NewMockIMessageBrokerWriter(ctrl)
 	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
@@ -162,7 +162,7 @@ func TestVerifyRegistrationOtp(t *testing.T) {
 
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	mockBroker := mocks.NewMockIMessageBrokerWriter(ctrl)
 	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"
@@ -281,7 +281,7 @@ func TestCompleteRegistration(t *testing.T) {
 
 	mockSqlStore := mocks.NewMockIStore(ctrl)
 	mockRedis := mocks.NewMockIRedis(ctrl)
-	mockBroker := mocks.NewMockIMessageBroker(ctrl)
+	mockBroker := mocks.NewMockIMessageBrokerWriter(ctrl)
 	service := newTestAuthService(mockSqlStore, mockRedis, mockBroker)
 
 	email := "test-email@gmail.com"

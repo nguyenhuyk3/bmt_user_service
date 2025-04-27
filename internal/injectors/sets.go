@@ -3,7 +3,7 @@ package injectors
 import (
 	"user_service/db/sqlc"
 	"user_service/internal/injectors/provider"
-	messagebroker "user_service/internal/message_broker"
+	"user_service/internal/message_broker/writers"
 	"user_service/utils/redis"
 	"user_service/utils/token/jwt"
 
@@ -24,6 +24,6 @@ var redisSet = wire.NewSet(
 	redis.NewRedisClient,
 )
 
-var kafkaSet = wire.NewSet(
-	messagebroker.NewKafkaMessageBroker,
+var kafkaWriterSet = wire.NewSet(
+	writers.NewKafkaWriter,
 )

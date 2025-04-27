@@ -15,9 +15,9 @@ import (
 )
 
 type fotgotPasswordService struct {
-	SqlStore      sqlc.IStore
-	RedisClient   services.IRedis
-	MessageBroker services.IMessageBroker
+	SqlStore    sqlc.IStore
+	RedisClient services.IRedis
+	Writer      services.IMessageBrokerWriter
 }
 
 const (
@@ -110,7 +110,7 @@ func (f *fotgotPasswordService) SendForgotPasswordOtp(ctx context.Context, arg r
 		},
 	}
 	// * Step 6
-	err = f.MessageBroker.SendMessage(
+	err = f.Writer.SendMessage(
 		ctx,
 		global.FORGOT_PASSWORD_OTP_EMAIL_TOPIC,
 		arg.Email,
@@ -196,11 +196,11 @@ func (f *fotgotPasswordService) CompleteForgotPassword(ctx context.Context, arg 
 func NewForgotPasswordSevice(
 	sqlStore sqlc.IStore,
 	redisClient services.IRedis,
-	messageBroker services.IMessageBroker,
+	writer services.IMessageBrokerWriter,
 ) services.IForgotPassword {
 	return &fotgotPasswordService{
-		SqlStore:      sqlStore,
-		RedisClient:   redisClient,
-		MessageBroker: messageBroker,
+		SqlStore:    sqlStore,
+		RedisClient: redisClient,
+		Writer:      writer,
 	}
 }

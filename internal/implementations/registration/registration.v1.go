@@ -15,9 +15,9 @@ import (
 )
 
 type registrationService struct {
-	SqlStore      sqlc.IStore
-	RedisClient   services.IRedis
-	MessageBroker services.IMessageBroker
+	SqlStore    sqlc.IStore
+	RedisClient services.IRedis
+	Writer      services.IMessageBrokerWriter
 }
 
 const (
@@ -71,7 +71,7 @@ func (r *registrationService) SendRegistrationOtp(ctx context.Context, arg reque
 		EncryptedEmail: encryptedBcryptEmail,
 		Otp:            otp,
 	}, ten_minutes)
-	err = r.MessageBroker.SendMessage(
+	err = r.Writer.SendMessage(
 		ctx,
 		global.REGISTRATION_OTP_EMAIL_TOPIC,
 		arg.Email,
@@ -146,10 +146,10 @@ func (r *registrationService) CompleteRegistration(ctx context.Context, arg requ
 func NewRegistrationService(
 	sqlStore sqlc.IStore,
 	redisClient services.IRedis,
-	messageBroker services.IMessageBroker) services.IRegistration {
+	writer services.IMessageBrokerWriter) services.IRegistration {
 	return &registrationService{
-		SqlStore:      sqlStore,
-		RedisClient:   redisClient,
-		MessageBroker: messageBroker,
+		SqlStore:    sqlStore,
+		RedisClient: redisClient,
+		Writer:      writer,
 	}
 }

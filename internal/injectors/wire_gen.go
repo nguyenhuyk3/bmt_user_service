@@ -17,7 +17,7 @@ import (
 	"user_service/internal/implementations/oauth2"
 	"user_service/internal/implementations/registration"
 	"user_service/internal/injectors/provider"
-	"user_service/internal/message_broker"
+	"user_service/internal/message_broker/writers"
 	"user_service/internal/middlewares"
 	"user_service/utils/redis"
 	"user_service/utils/token/jwt"
@@ -39,15 +39,15 @@ func InitAuthController() (*controllers.AuthController, error) {
 	pool := provider.ProvidePgxPool()
 	iStore := sqlc.NewStore(pool)
 	iRedis := redis.NewRedisClient()
-	iMessageBroker := messagebroker.NewKafkaMessageBroker()
-	iRegistration := registration.NewRegistrationService(iStore, iRedis, iMessageBroker)
+	iMessageBrokerWriter := writers.NewKafkaWriter()
+	iRegistration := registration.NewRegistrationService(iStore, iRedis, iMessageBrokerWriter)
 	string2 := provider.ProvideSecretKey()
 	iMaker, err := jwt.NewJWTMaker(string2)
 	if err != nil {
 		return nil, err
 	}
 	iLogin := login.NewLoginService(iStore, iMaker)
-	iForgotPassword := forgotpassword.NewForgotPasswordSevice(iStore, iRedis, iMessageBroker)
+	iForgotPassword := forgotpassword.NewForgotPasswordSevice(iStore, iRedis, iMessageBrokerWriter)
 	ioAuth2 := oauth2.NewOAuth2Service(iStore, iMaker)
 	iLogout := logout.NewLogoutService(iStore)
 	googleOAuthConfig := provider.ProvideGoogleOAuthConfig()

@@ -19,7 +19,7 @@ func InitAuthController() (*controllers.AuthController, error) {
 		dbSet,
 		jwtSet,
 		redisSet,
-		kafkaSet,
+		kafkaWriterSet,
 
 		registration.NewRegistrationService,
 		forgotpassword.NewForgotPasswordSevice,

@@ -16,44 +16,44 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockIMessageBroker is a mock of IMessageBroker interface.
-type MockIMessageBroker struct {
+// MockIMessageBrokerWriter is a mock of IMessageBrokerWriter interface.
+type MockIMessageBrokerWriter struct {
 	ctrl     *gomock.Controller
-	recorder *MockIMessageBrokerMockRecorder
+	recorder *MockIMessageBrokerWriterMockRecorder
 	isgomock struct{}
 }
 
-// MockIMessageBrokerMockRecorder is the mock recorder for MockIMessageBroker.
-type MockIMessageBrokerMockRecorder struct {
-	mock *MockIMessageBroker
+// MockIMessageBrokerWriterMockRecorder is the mock recorder for MockIMessageBrokerWriter.
+type MockIMessageBrokerWriterMockRecorder struct {
+	mock *MockIMessageBrokerWriter
 }
 
-// NewMockIMessageBroker creates a new mock instance.
-func NewMockIMessageBroker(ctrl *gomock.Controller) *MockIMessageBroker {
-	mock := &MockIMessageBroker{ctrl: ctrl}
-	mock.recorder = &MockIMessageBrokerMockRecorder{mock}
+// NewMockIMessageBrokerWriter creates a new mock instance.
+func NewMockIMessageBrokerWriter(ctrl *gomock.Controller) *MockIMessageBrokerWriter {
+	mock := &MockIMessageBrokerWriter{ctrl: ctrl}
+	mock.recorder = &MockIMessageBrokerWriterMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIMessageBroker) EXPECT() *MockIMessageBrokerMockRecorder {
+func (m *MockIMessageBrokerWriter) EXPECT() *MockIMessageBrokerWriterMockRecorder {
 	return m.recorder
 }
 
 // Close mocks base method.
-func (m *MockIMessageBroker) Close() {
+func (m *MockIMessageBrokerWriter) Close() {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Close")
 }
 
 // Close indicates an expected call of Close.
-func (mr *MockIMessageBrokerMockRecorder) Close() *gomock.Call {
+func (mr *MockIMessageBrokerWriterMockRecorder) Close() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockIMessageBroker)(nil).Close))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockIMessageBrokerWriter)(nil).Close))
 }
 
 // SendMessage mocks base method.
-func (m *MockIMessageBroker) SendMessage(ctx context.Context, topic, key string, message any) error {
+func (m *MockIMessageBrokerWriter) SendMessage(ctx context.Context, topic, key string, message any) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendMessage", ctx, topic, key, message)
 	ret0, _ := ret[0].(error)
@@ -61,7 +61,7 @@ func (m *MockIMessageBroker) SendMessage(ctx context.Context, topic, key string,
 }
 
 // SendMessage indicates an expected call of SendMessage.
-func (mr *MockIMessageBrokerMockRecorder) SendMessage(ctx, topic, key, message any) *gomock.Call {
+func (mr *MockIMessageBrokerWriterMockRecorder) SendMessage(ctx, topic, key, message any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockIMessageBroker)(nil).SendMessage), ctx, topic, key, message)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockIMessageBrokerWriter)(nil).SendMessage), ctx, topic, key, message)
 }

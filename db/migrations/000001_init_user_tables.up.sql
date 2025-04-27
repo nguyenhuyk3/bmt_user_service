@@ -1,7 +1,7 @@
 CREATE TYPE "roles" AS ENUM (
   'customer',
   'employee',
-  'manage',
+  'manager',
   'ceo'
 );
 

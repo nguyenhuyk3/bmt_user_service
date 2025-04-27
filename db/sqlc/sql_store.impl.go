@@ -118,7 +118,9 @@ func (s *SqlStore) UpdateUserInforTran(ctx context.Context, arg request.ChangeIn
 		}
 
 		err = s.Queries.UpdateInforByEmail(ctx, UpdateInforByEmailParams{
-			Email:    pgtype.Text{String: arg.Email, Valid: true},
+			Email: pgtype.Text{
+				String: arg.Email,
+				Valid:  true},
 			Name:     arg.Name,
 			Sex:      sex,
 			BirthDay: arg.BirthDay})
